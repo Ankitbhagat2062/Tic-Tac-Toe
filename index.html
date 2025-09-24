@@ -1,49 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="description" content="This app is  simple time pass Games like Tic Tac Toe  ">
-        <title>Tic - Tac - Toe</title>
-        <link rel="stylesheet" href="CSS/styles.css">
-    </head>
-    <body>
-     <div id="game"> 
-        <video id="bg-video" autoplay muted loop>
-            <source src="video/background-video.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-        <div id="container">
-            <h1>Tic Tac Toe</h1>
-            <div id="mode-selector">
-                <button id="multiplayer-btn">Multiplayer Mode</button>
-                <button id="computer-btn">Computer Mode</button>
-            </div>
-            <div id="level-btn">Level: 1</div> <!-- Add the level button here -->
-            <div id="board" class="board"></div>
-            <div id="restart-btn">Restart</div>
-            <div id="result" class="result-screen">
-                <div id="result-message"></div>
-                <button id="new-game-btn">New Game</button>
-            </div>
-        </div>
-    
-        <audio id="bg-music" loop autoplay>
-            <source src="music/background-music.mp3" type="audio/mpeg">
-        </audio>
-        <audio id="win-music">
-            <source src="music/win-music.mp3" type="audio/mpeg">
-        </audio>
-        <audio id="draw-music">
-            <source src="music/draw-music.mp3" type="audio/mpeg">
-        </audio>
-        <audio id="click-sound">
-            <source src="music/click-sound.mp3" type="audio/mpeg">
-        </audio>
-        <audio id="restart-sound">
-            <source src="music/restart-sound.mp3" type="audio/mpeg">
-        </audio>
-    </div>
-        <script src="JS/script.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
