@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { FiSettings, FiPlus, FiMinus } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-import { MenuItem, MenuItems, Menu, MenuButton } from '@headlessui/react';
-import { Link } from "react-router-dom";
 import { IoMdBrush } from "react-icons/io";
 import { FaExchangeAlt } from "react-icons/fa";
 import { useSelector, useDispatch } from 'react-redux';
@@ -88,11 +86,11 @@ const Home = () => {
   const Player = ({ player, symbol }) => {
     return (
       <>
-        <div className="flex flex-col items-center justify-center bg-blue-700 rounded-lg p-6 w-32 h-40 shadow-lg">
-          <div className="w-16 h-20 flex items-center justify-center bg-blue-900 rounded-md mb-2">
-            <span className="text-6xl text-cyan-400 font-extrabold">{symbol}</span>
+        <div className="flex flex-col items-center justify-center bg-blue-700 rounded-lg md:p-6 md:w-32 md:h-40 w-24 h-30 shadow-lg">
+          <div className="md:w-16 md:h-20 w-8 h-10 flex items-center justify-center bg-blue-900 rounded-md mb-2">
+            <span className="md:text-6xl text-2xl text-cyan-400 font-extrabold">{symbol}</span>
           </div>
-          <span className="text-white font-semibold text-lg">{player}</span>
+          <span className="text-white font-semibold md:text-lg text-sm">{player}</span>
         </div>
       </>
     )
@@ -330,62 +328,55 @@ const Home = () => {
       {(startPlay && mode === 'Classic') && (
         <>
           {/* Main Content */}
-          <div className="flex flex-col items-center justify-center gap-6 w-full h-full md:gap-12">
+          <div className="flex flex-col items-center justify-center w-full h-full md:gap-6">
             <h1>{mode} Game Started</h1>
 
             {/* Layout wrapper */}
-            <div className="flex flex-col items-center justify-center gap-6 w-full h-full md:flex-row md:gap-12">
-              {/* Players Row - top on mobile, split on desktop */}
-              <div className="flex flex-row items-start justify-center gap-6 md:flex-col md:flex-[1]">
+            <div className="flex flex-col items-center justify-center w-full h-full md:flex-row md:gap-6">
+              {/* Game Boar  */}
+              <div className="flex items-center justify-center">
+                <div className="w-full aspect-square max-w-[400px]">
+                  <TicTacToe />
+                </div>
+              </div>
+              <div className="flex gap-1 items-start justify-center">
                 {/* Player 1 */}
                 <div className="flex flex-col items-center justify-center gap-2">
-                  <Player player="Player 1" symbol="X" className="w-20 h-24 md:w-28 md:h-32 lg:w-36 lg:h-40" />
+                  <Player player="Player 1" symbol="X" />
                   <h1 className="text-sm md:text-base lg:text-lg text-center">
                     {(playerSymbol === currentPlayer && currentPlayer) && `Your Turn ${currentPlayer}`}
                   </h1>
                 </div>
-
                 {/* Player 2 */}
                 <div className="flex flex-col items-center justify-center gap-2">
-                  <Player player={player} symbol="O" className="w-20 h-24 md:w-28 md:h-32 lg:w-36 lg:h-40" />
-                </div>
-              </div>
-
-              {/* Board - bottom on mobile, middle on desktop */}
-              <div className="order-2 md:order-none flex-[9] flex items-center justify-center">
-                <div className="w-full aspect-square max-w-[500px]">
-                  <TicTacToe />
+                  <Player player={player} symbol="O" />
                 </div>
               </div>
             </div>
+
           </div>
         </>
       )}
       {(startPlay && mode === 'Custom') && (
         <>
-           {/* Main Content */}
-          <div className="flex flex-col items-center justify-center gap-6 w-full h-full md:gap-12">
+          {/* Main Content */}
+          <div className="flex flex-col items-center justify-center w-full h-full md:gap-6">
             <h1>{mode} Game Started</h1>
 
             {/* Layout wrapper */}
-            <div className="flex flex-col items-center justify-center gap-6 w-full h-full md:flex-row md:gap-12">
-              {/* Players Row - top on mobile, split on desktop */}
-              <div className="flex flex-row items-start justify-center gap-6 md:flex-col md:flex-[1]">
-                {/* Player 1 */}
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <Player player="Player 1" symbol="X" className="w-20 h-24 md:w-28 md:h-32 lg:w-36 lg:h-40" />
-                  <h1 className="text-sm md:text-base lg:text-lg text-center">
-                    {playerSymbol === currentPlayer && `Your Turn ${currentPlayer}`}
-                  </h1>
-                </div>
-
-                {/* Player 2 */}
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <Player player={player} symbol="O" className="w-20 h-24 md:w-28 md:h-32 lg:w-36 lg:h-40" />
-                </div>
+            <div className="flex flex-col items-center justify-center w-full h-full md:flex-row md:gap-6">
+              {/* Player 1 */}
+              <div className="flex flex-col items-center justify-center gap-2">
+                <Player player="Player 1" symbol="X" className="w-20 h-24 md:w-28 md:h-32 lg:w-36 lg:h-40" />
+                <h1 className="text-sm md:text-base lg:text-lg text-center">
+                  {playerSymbol === currentPlayer && `Your Turn ${currentPlayer}`}
+                </h1>
               </div>
-
-              {/* Board - bottom on mobile, middle on desktop */}
+              {/* Player 2 */}
+              <div className="flex flex-col items-center justify-center gap-2">
+                <Player player={player} symbol="O" className="w-20 h-24 md:w-28 md:h-32 lg:w-36 lg:h-40" />
+              </div>
+              {/* Game Boar  */}
               <div className="order-2 md:order-none flex-[9] flex items-center justify-center">
                 <div className="w-full aspect-square max-w-[500px]">
                   <TicTacToe />
