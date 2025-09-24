@@ -48,12 +48,13 @@ const Navbar = () => {
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 items-center justify-between">
                         <div className="flex items-center">
-                            <div className="shrink-0">
+                            <div className="shrink-0 flex gap-1 items-center justify-center">
                                 <img
                                     alt="Your Company"
                                     src="./tic-tac-toe.png"
                                     className="size-8"
                                 />
+                               <span> Tic Tac Toe </span>
                             </div>
                             <div className="hidden md:block">
                                 <div className="ml-10 flex items-baseline space-x-4">
@@ -77,6 +78,14 @@ const Navbar = () => {
                             <div className="ml-4 flex items-center md:ml-6">
                                 {token ? (
                                     <>
+                                     <button
+                                        type='button'
+                                        className="!cursor-pointer flex items-center gap-1 justify-center relative rounded-full p-1 text-gray-400 hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500"
+                                    >
+                                        <span className="absolute -inset-1.5" />
+                                        <span className="sr-only">View notifications</span>
+                                        <BellIcon aria-hidden="true" className="size-6" />
+                                    </button>
                                         {/* Profile dropdown */}
                                         <Menu as="div" className="relative ml-3">
                                             <MenuButton className="relative flex h-10 w-10 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
@@ -116,14 +125,14 @@ const Navbar = () => {
                                         </Menu>
                                     </>
                                 ) : (
-                                    <button
-                                        type="button"
+                                    <Link
+                                        to='/login'
                                         className="!cursor-pointer flex items-center gap-1 justify-center relative rounded-full p-1 text-gray-400 hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500"
                                     >
                                         <span className="absolute -inset-1.5" />
                                         <span className="">Login</span>
                                         <CgLogIn />
-                                    </button>
+                                    </Link>
 
                                 )}
 
@@ -173,10 +182,10 @@ const Navbar = () => {
                             </div>
                             <button
                                 type="button"
-                                className="relative ml-auto shrink-0 rounded-full p-1 text-gray-400 hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500"
+                                className="relative ml-auto flex shrink-0 rounded-full p-1 text-gray-400 hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500"
                             >
                                 <span className="absolute -inset-1.5" />
-                                <span className="">Login</span>
+                                <span className="sr-only">View notifications</span>
                                 <BellIcon aria-hidden="true" className="size-6" />
                             </button>
                         </div>

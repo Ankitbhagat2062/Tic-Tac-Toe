@@ -86,8 +86,8 @@ const Home = () => {
   const Player = ({ player, symbol }) => {
     return (
       <>
-        <div className="flex flex-col items-center justify-center bg-blue-700 rounded-lg md:p-6 md:w-32 md:h-40 w-24 h-30 shadow-lg">
-          <div className="md:w-16 md:h-20 w-8 h-10 flex items-center justify-center bg-blue-900 rounded-md mb-2">
+        <div className="flex flex-col items-center justify-center bg-blue-700 rounded-lg md:p-6 md:w-32 md:h-40 w-18 h-24 shadow-lg">
+          <div className="md:w-16 md:h-20 w-7 h-9 flex items-center justify-center bg-blue-900 rounded-md mb-2">
             <span className="md:text-6xl text-2xl text-cyan-400 font-extrabold">{symbol}</span>
           </div>
           <span className="text-white font-semibold md:text-lg text-sm">{player}</span>
@@ -138,7 +138,7 @@ const Home = () => {
 
       {/* Header with Settings */}
       <AnimatePresence>
-        <motion.div className={`${startPlay ? 'sticky ' : 'fixed '} top-0 z-20 w-full`}>
+        <motion.div className={`${startPlay } fixed top-0 z-20 w-full`}>
           <Navbar />
         </motion.div>
       </AnimatePresence>
@@ -328,7 +328,7 @@ const Home = () => {
       {(startPlay && mode === 'Classic') && (
         <>
           {/* Main Content */}
-          <div className="flex flex-col items-center justify-center w-full h-full md:gap-6">
+          <div className="flex flex-col items-center justify-center w-full h-full md:gap- mt-5">
             <h1>{mode} Game Started</h1>
 
             {/* Layout wrapper */}
@@ -339,7 +339,7 @@ const Home = () => {
                   <TicTacToe />
                 </div>
               </div>
-              <div className="flex gap-1 items-start justify-center">
+              <div className="flex gap-1 items-start justify-between w-full px-4">
                 {/* Player 1 */}
                 <div className="flex flex-col items-center justify-center gap-2">
                   <Player player="Player 1" symbol="X" />
@@ -353,33 +353,34 @@ const Home = () => {
                 </div>
               </div>
             </div>
-
           </div>
         </>
       )}
       {(startPlay && mode === 'Custom') && (
         <>
           {/* Main Content */}
-          <div className="flex flex-col items-center justify-center w-full h-full md:gap-6">
+          <div className="flex flex-col items-center justify-center w-full h-full md:gap-6 mt-5">
             <h1>{mode} Game Started</h1>
 
             {/* Layout wrapper */}
             <div className="flex flex-col items-center justify-center w-full h-full md:flex-row md:gap-6">
-              {/* Player 1 */}
-              <div className="flex flex-col items-center justify-center gap-2">
-                <Player player="Player 1" symbol="X" className="w-20 h-24 md:w-28 md:h-32 lg:w-36 lg:h-40" />
-                <h1 className="text-sm md:text-base lg:text-lg text-center">
-                  {playerSymbol === currentPlayer && `Your Turn ${currentPlayer}`}
-                </h1>
-              </div>
-              {/* Player 2 */}
-              <div className="flex flex-col items-center justify-center gap-2">
-                <Player player={player} symbol="O" className="w-20 h-24 md:w-28 md:h-32 lg:w-36 lg:h-40" />
-              </div>
               {/* Game Boar  */}
-              <div className="order-2 md:order-none flex-[9] flex items-center justify-center">
-                <div className="w-full aspect-square max-w-[500px]">
+              <div className="flex items-center justify-center">
+                <div className="w-full aspect-square max-w-[400px]">
                   <TicTacToe />
+                </div>
+              </div>
+              <div className="flex gap-1 items-start justify-between w-full px-4">
+                {/* Player 1 */}
+                <div className="flex flex-col items-center justify-center gap-2">
+                  <Player player="Player 1" symbol="X" />
+                  <h1 className="text-sm md:text-base lg:text-lg text-center">
+                    {(playerSymbol === currentPlayer && currentPlayer) && `Your Turn ${currentPlayer}`}
+                  </h1>
+                </div>
+                {/* Player 2 */}
+                <div className="flex flex-col items-center justify-center gap-2">
+                  <Player player={player} symbol="O" />
                 </div>
               </div>
             </div>
