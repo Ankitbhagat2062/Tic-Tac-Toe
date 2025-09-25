@@ -1,6 +1,25 @@
 import React from 'react'
-import { FaFacebookF, FaInstagram, FaYoutube } from 'react-icons/fa';
+import { FaFacebookF, FaInstagram, FaYoutube, } from 'react-icons/fa';
+import { } from "react-icons/fa";
+const GooglePlayIcon = ({ className = "w-8 h-8" }) => (
+  <svg
+    viewBox="0 0 512 512"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    {/* Main big triangle background (Sky Blue) */}
+    <path d="M96 32 L416 256 L96 480 Z" fill="#00AEEF" />
 
+    {/* Green region (upper median slice) */}
+    <path d="M96 32 L256 256 L416 256 Z" fill="#32A350" />
+
+    {/* Red region (lower median slice) */}
+    <path d="M96 480 L256 256 L416 256 Z" fill="#FF4229" />
+
+    {/* Yellow small center (intersection of medians) */}
+    <path d="M96 32 L96 480 L256 256 Z" fill="#FFD500" />
+  </svg>
+);
 
 const Footer = () => {
     return (
@@ -17,8 +36,13 @@ const Footer = () => {
                         {/* App Store Buttons */}
                         <div className="flex flex-wrap justify-center items-center gap-4 mb-12">
                             <a href="#" className="bg-black text-white px-6 py-3 rounded-lg flex items-center gap-3 hover:bg-gray-800 transition-colors">
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%234CAF50' d='M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.61 3,21.09 3,20.5Z'/%3E%3C/svg%3E" alt="Google Play" className="w-6 h-6" />
-                                {/* <img src="./google-play-icon.png" alt="Google Play" className="w-6 h-6" /> */}
+                                {/* <svg className="w-6 h-6" viewBox="0 0 512 512">
+                                    <path fill="#32A350" d="M325.3 234.3L104.7 26.6C97.5 20 85.3 25 85.3 35.3v441.4c0 10.3 12.2 15.3 19.4 8.7l220.6-207.7c6.7-6.3 6.7-16.9 0-23.4z" />
+                                    <path fill="#FFD500" d="M378.7 286.7L325.3 234.3 104.7 26.6c-7.1-6.6-19.4-1.6-19.4 8.7v101.2l293.4 150.2z" />
+                                    <path fill="#FF4229" d="M378.7 225.3L104.7 385.5v101.2c0 10.3 12.2 15.3 19.4 8.7l220.6-207.7 34-62.4z" />
+                                    <path fill="#00AEEF" d="M378.7 225.3l-53.4 61.4 53.4 61.4 85.3-61.4-85.3-61.4z" />
+                                </svg> */}
+                                <GooglePlayIcon />
                                 <div className="text-left">
                                     <div className="text-xs opacity-75">GET IT ON</div>
                                     <div className="font-semibold">Google Play</div>

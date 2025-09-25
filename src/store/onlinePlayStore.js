@@ -47,8 +47,16 @@ const useOnlinePlayStore = create((set, get) => {
         winLineStyle: {},
         showWinLine: false,
         boardLocked: false,
-        boardState: Array(9).fill(null),
         winCells: [],
+        winConditions: [],
+        
+        customWin: 3,
+        customSize: 3,
+        player: '',
+        playerState: '',
+        mode: '',
+        startPlay: false,
+        boardState: Array(9).fill(null),
 
         // 🔹 audio state + functions
         audios,
@@ -85,7 +93,7 @@ const useOnlinePlayStore = create((set, get) => {
         },
         refs: {
             overlay: null,
-            totalGameWon:null,
+            totalGameWon: null,
             board: null,
             line: null,
             msg: null,
@@ -106,10 +114,18 @@ const useOnlinePlayStore = create((set, get) => {
         setBoardLocked: (value) => set({ boardLocked: value }),
         setBoardState: (board) => set({ boardState: board }),
         setWinCells: (cells) => set({ winCells: cells }),
+        setWinConditions: (cells) => set({ winConditions: cells }),
+
+        setPlayer: (player) => set({ player: player }),
+        setStartPlay: (value) => set({ startPlay: value }),
+        setMode: (mode) => set({ mode: mode }),
+        setPlayerState: (state) => set({ playerState: state }),
+        setCustomWin: (win) => set({ customWin: win }),
+        setCustomSize: (size) => set({ customSize: size }),
 
         // Socket Event Listeners
         initsocketListeners: () => {
-            const { stop, socket, loop, refs, setPlayerSymbol, setBoardState, setStatus, handleGameOver, resetWinLine, setRoomId, setCurrentPlayer } = get();
+            const { stop, socket, loop, play, refs, setPlayerSymbol, setBoardState, setStatus, handleGameOver, resetWinLine, setRoomId, setCurrentPlayer } = get();
             if (!socket) return;
 
             // removing existing listeners to prevent duplicate handlers
@@ -175,7 +191,7 @@ const useOnlinePlayStore = create((set, get) => {
                 setStatus(msg);
                 resetWinLine();
                 loop("bgMusic", true);  // set background music to loop
-                stop("bgMusic");
+                play("bgMusic");
             });
         },
         resetWinLine: () => {
@@ -200,7 +216,7 @@ const useOnlinePlayStore = create((set, get) => {
         },
         // 🔹 main game over handler
         handleGameOver: (msg, winner, winningCells) => {
-            const { playerSymbol, setStatus, setShowWinLine, setBoardLocked, drawWinLine, refs } = get();
+            const { playerSymbol, setStatus, setShowWinLine, setBoardLocked, drawWinLine, refs, } = get();
 
             // stop background
             get().stop("bgMusic");
@@ -227,7 +243,7 @@ const useOnlinePlayStore = create((set, get) => {
 
             // overlay message
             if (refs.overlay) {
-                refs.totalGameWon.innerText = msg +  `\nYou won 1 round`;
+                refs.totalGameWon.innerText = msg + `\nYou won 1 round`;
                 refs.totalGameWon.style.whiteSpace = "pre-line";
             }
 
@@ -293,10 +309,11 @@ const useOnlinePlayStore = create((set, get) => {
             }
         },
         createRoom: (selectedMode) => {
-            const { socket } = get();
+            const { socket , customSize } = get();
             if (selectedMode === "online") {
+                get().play("bgMusic");
                 setPlayerState("online");
-                socket.emit("createRoom");
+                socket.emit("createRoom", customSize);
             }
         },
         joinRoom: (id) => {
@@ -310,23 +327,26 @@ const useOnlinePlayStore = create((set, get) => {
             console.log("Joining room with id:", trimmedId);
             setRoomId(trimmedId);
             socket.emit("joinGame", trimmedId);
+            get().play("bgMusic");
             setShowWinLine(false);
         },
         newGame: () => {
-            const { resetWinLine, setBoardState, socket, setShowWinLine, roomId, stopAll } = get();
+            const { resetWinLine, setBoardState, socket, setShowWinLine, roomId, stopAll , customSize } = get();
             resetWinLine();
             toast.info(`New Game Started${roomId ? ` with ${roomId}` : ''}`);
             stopAll(); // Stop all music to clear everything
-            setBoardState(Array(9).fill(null));
+            setBoardState(Array(customSize * customSize).fill(null));
             socket.emit("newGame", roomId);
             setShowWinLine(false);
         },
         aiMove: (index) => {
-            const { playerSymbol, setPlayerSymbol, boardState, setBoardState, checkWinner, handleGameOver, setCurrentPlayer, getWinningCells, checkDraw } = get();
+            const {customSize , customWin,  playerSymbol, setWinCells, setPlayerSymbol, boardState, setBoardState, checkWinner, handleGameOver, setCurrentPlayer, checkDraw } = get();
+
             // assume human is always "X" unless you store playerSymbol differently
             const humanSymbol = playerSymbol || "X";
             const aiSymbol = humanSymbol === "X" ? "O" : "X";
             setPlayerSymbol(humanSymbol)
+
             // place human symbol
             const newBoard = [...boardState];
             newBoard[index] = humanSymbol;
@@ -334,9 +354,10 @@ const useOnlinePlayStore = create((set, get) => {
             get().play("clickSound");
 
             // check win/draw
-            const winner = checkWinner(newBoard);
-            if (winner) {
-                handleGameOver(`Player ${winner} wins!`, winner, getWinningCells(newBoard));
+            const result = checkWinner(newBoard, customSize, customSize, customWin);
+            if (result?.winner) {
+                setWinCells(result.cells);
+                handleGameOver(`Player ${result.winner} wins!`, result.winner, result.cells);
                 return;
             }
             if (checkDraw(newBoard)) {
@@ -354,9 +375,10 @@ const useOnlinePlayStore = create((set, get) => {
                 setBoardState(afterAI);
                 get().play("clickSound");
 
-                const winner2 = checkWinner(afterAI);
-                if (winner2) {
-                    handleGameOver(`Player ${winner2} wins!`, winner2, getWinningCells(afterAI));
+                const winner2 = checkWinner(afterAI, customSize, customSize, customWin);
+                if (winner2?.winner) {
+                    setWinCells(winner2.cells);
+                    handleGameOver(`Player ${winner2.winner} wins!`, winner2.winner, winner2.cells);
                     return;
                 }
                 if (checkDraw(afterAI)) {
@@ -370,41 +392,62 @@ const useOnlinePlayStore = create((set, get) => {
 
             return;
         },
-        checkWinner: (board) => {
-            const winConds = [
-                [0, 1, 2], [3, 4, 5], [6, 7, 8],
-                [0, 3, 6], [1, 4, 7], [2, 5, 8],
-                [0, 4, 8], [2, 4, 6]
+        generateWinningPatterns: (rows, cols, winLength) => {
+            const patterns = [];
+
+            // directions: right, down, down-right, down-left
+            const directions = [
+                [0, 1],   // horizontal
+                [1, 0],   // vertical
+                [1, 1],   // diagonal ↘
+                [1, -1],  // diagonal ↙
             ];
-            for (let [a, b, c] of winConds) {
-                if (board[a] && board[a] === board[b] && board[a] === board[c]) return board[a];
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    for (let [dr, dc] of directions) {
+                        const cells = [];
+                        for (let k = 0; k < winLength; k++) {
+                            const nr = r + dr * k;
+                            const nc = c + dc * k;
+                            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+                                cells.push(nr * cols + nc);
+                            }
+                        }
+                        if (cells.length === winLength) {
+                            patterns.push(cells);
+                        }
+                    }
+                }
             }
+
+            return patterns;
+        },
+        checkWinner: (board, rows, cols, winLength) => {
+            const { generateWinningPatterns } = get();
+            const winConditions = generateWinningPatterns(rows, cols, winLength);
+            for (let condition of winConditions) {
+                const values = condition.map(i => board[i]);
+                if (values.every(v => v && v === values[0])) {
+                    return { winner: values[0], cells: condition }; // ✅ winner + winning cells
+                }
+            }
+
             return null;
         },
         checkDraw: (board) => board.every(cell => cell !== null),
-        getWinningCells: (board) => {
-            const winConds = [
-                [0, 1, 2], [3, 4, 5], [6, 7, 8],
-                [0, 3, 6], [1, 4, 7], [2, 5, 8],
-                [0, 4, 8], [2, 4, 6]
-            ];
-            for (let cond of winConds) {
-                const [a, b, c] = cond;
-                if (board[a] && board[a] === board[b] && board[a] === board[c]) return cond;
-            }
-            return [];
-        },
         boardElClick: (e) => {
-            const { boardLocked, refs, socket, setShowWinLine, roomId, playerSymbol } = get();
+            const { boardLocked, refs, socket, setShowWinLine, roomId, playerSymbol, winConditions } = get();
             if (boardLocked) return; // 🚫 prevent moves if locked
 
             const index = [...refs.board.children].indexOf(e.target);
             if (index !== -1) {
-                socket.emit("makeMove", { roomId, index, player: playerSymbol });
+                socket.emit("makeMove", { roomId, index, player: playerSymbol, winConditions });
             }
             setShowWinLine(false);
         },
         cleanup: () => {
+            const { customSize } = get();
             set({
                 roomId: null,
                 isPlaying: false,
@@ -414,7 +457,7 @@ const useOnlinePlayStore = create((set, get) => {
                 winLineStyle: {},
                 showWinLine: false,
                 boardLocked: false,
-                boardState: Array(9).fill(null),
+                boardState: Array(customSize * customSize).fill(null),
                 winCells: [],
             })
         },

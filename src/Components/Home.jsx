@@ -3,7 +3,6 @@ import { FiSettings, FiPlus, FiMinus } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { IoMdBrush } from "react-icons/io";
 import { FaExchangeAlt } from "react-icons/fa";
-import { useSelector, useDispatch } from 'react-redux';
 import { CgArrowsExchangeAltV } from "react-icons/cg";
 
 import useAuthStore from "../store/useAuthStore";
@@ -12,16 +11,7 @@ import useApp from '../hooks/useApp';
 import TicTacToe from "./TicTacToe";
 import Navbar from "./Navbar";
 
-import {
-  setPlayer,
-  setStartPlay,
-  setMode,
-  setPlayerState,
-
-  setCustomWin,
-  setCustomSize,
-} from '../store/gameSlice';
-
+import { useShallow } from 'zustand/shallow';
 import useOnlinePlayStore from "../store/onlinePlayStore";
 
 const Home = () => {
@@ -33,16 +23,26 @@ const Home = () => {
 
   const { fetchUser, fetchUserProfile } = useAuthStore();
 
-  // Redux state selectors
-  const player = useSelector((state) => state.game.player)
-  const startPlay = useSelector((state) => state.game.startPlay);
-  const customWin = useSelector((state) => state.game.customWin);
-  const customSize = useSelector((state) => state.game.customSize);
-  const mode = useSelector((state) => state.game.mode)
-  const playerState = useSelector((state) => state.game.playerState)
+  const { setPlayer, setStartPlay, setMode, setPlayerState, setCustomWin, setCustomSize,setBoardState } = useOnlinePlayStore(
+    useShallow((state) => ({
+      setPlayer: state.setPlayer,
+      setStartPlay: state.setStartPlay,
+      setMode: state.setMode,
+      setPlayerState: state.setPlayerState,
+      setCustomWin: state.setCustomWin,
+      setCustomSize: state.setCustomSize,
+      setBoardState: state.setBoardState,
+    })));
 
-  // Redux dispatch
-  const dispatch = useDispatch();
+
+  // Redux state selectors
+  const player = useOnlinePlayStore((state) => state.player)
+  const startPlay = useOnlinePlayStore((state) => state.startPlay);
+  const customWin = useOnlinePlayStore((state) => state.customWin);
+  const customSize = useOnlinePlayStore((state) => state.customSize);
+  const mode = useOnlinePlayStore((state) => state.mode)
+  const playerState = useOnlinePlayStore((state) => state.playerState)
+
   useEffect(() => {
     fetchUser();
     fetchUserProfile();
@@ -98,26 +98,32 @@ const Home = () => {
   const handleSelectGame = (selectedMode) => {
     if (selectedMode === 'Classic') {
       if (mode.length === 0) {
-        dispatch(setMode("Classic"));
+        setMode("Classic");
       }
       else {
-        dispatch(setPlayerState("offline"));
-        dispatch(setPlayer("AI"));
+        setPlayerState("offline");
+        setPlayer("AI");
       };
       if (player.length > 0) {
-        dispatch(setPlayer("Player 2"));
+        setPlayer("Player 2");
       }
 
     } else if (selectedMode === 'Custom') {
       if (mode.length === 0) {
-        dispatch(setMode("Custom"))
+        setMode("Custom");
       }
       else {
-        dispatch(setPlayer("Player 1"));
+        setPlayer("Player 1");
       };
       if (player.length > 0) {
-        dispatch(setPlayerState("online"));
+        setPlayerState("online");
       }
+    }
+  }
+  const handleStartGame = () => {
+    if (!startPlay) {
+      setStartPlay(true);
+      setBoardState(Array(customSize * customSize).fill(null));
     }
   }
   const Button = ({ selectedMode }) => {
@@ -138,7 +144,7 @@ const Home = () => {
 
       {/* Header with Settings */}
       <AnimatePresence>
-        <motion.div className={`${startPlay } fixed top-0 z-20 w-full`}>
+        <motion.div className={`${startPlay} fixed top-0 z-20 w-full`}>
           <Navbar />
         </motion.div>
       </AnimatePresence>
@@ -256,11 +262,7 @@ const Home = () => {
             </div>
 
             {/* Start Button */}
-            <button onClick={() => {
-              if (!startPlay) {
-                dispatch(setStartPlay(!startPlay));
-              }
-            }}
+            <button onClick={handleStartGame}
               className="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer font-semibold py-3 px-12 rounded-lg shadow-lg transition">
               Start
             </button>
@@ -274,7 +276,7 @@ const Home = () => {
             {/* Board Size */}
             <div className="flex items-center justify-center space-x-4 mb-4">
               <button
-                onClick={() => dispatch(setCustomSize(Math.max(3, customSize - 1)))}
+                onClick={() => setCustomSize(Math.max(3, customSize - 1))}
                 className="bg-blue-700 hover:bg-blue-800 rounded-full p-2 shadow-md transition"
                 aria-label="Decrease board size"
               >
@@ -284,7 +286,7 @@ const Home = () => {
                 {customSize} x {customSize} size
               </div>
               <button
-                onClick={() => dispatch(setCustomSize(Math.min(8, customSize + 1)))}
+                onClick={() => setCustomSize(Math.min(8, customSize + 1))}
                 className="bg-blue-700 hover:bg-blue-800 rounded-full p-2 shadow-md transition"
                 aria-label="Increase board size"
               >
@@ -294,7 +296,7 @@ const Home = () => {
             {/* Win Condition */}
             <div className="flex items-center justify-center space-x-4 mb-6">
               <button
-                onClick={() => dispatch(setCustomWin(Math.max(3, customWin - 1)))}
+                onClick={() => setCustomWin(Math.max(3, customWin - 1))}
                 className="bg-blue-700 hover:bg-blue-800 rounded-full p-2 shadow-md transition"
                 aria-label="Decrease win condition"
               >
@@ -304,7 +306,7 @@ const Home = () => {
                 {customWin} win
               </div>
               <button
-                onClick={() => dispatch(setCustomWin(Math.min(5, customWin + 1)))}
+                onClick={() => setCustomWin(Math.min(5, customWin + 1))}
                 className="bg-blue-700 hover:bg-blue-800 rounded-full p-2 shadow-md transition"
                 aria-label="Increase win condition"
               >
@@ -313,13 +315,8 @@ const Home = () => {
             </div>
             {/* Start Button */}
             <button
-              onClick={() => {
-                if (!startPlay) {
-                  dispatch(setStartPlay(!startPlay));
-                }
-              }}
-              className="bg-blue-900 hover:bg-blue-800 text-white cursor-pointer font-semibold py-3 px-12 rounded-lg shadow-lg transition"
-            >
+              onClick={handleStartGame}
+              className="bg-blue-900 hover:bg-blue-800 text-white cursor-pointer font-semibold py-3 px-12 rounded-lg shadow-lg transition">
               Start
             </button>
           </div>
@@ -328,11 +325,11 @@ const Home = () => {
       {(startPlay && mode === 'Classic') && (
         <>
           {/* Main Content */}
-          <div className="flex flex-col items-center justify-center w-full h-full md:gap- mt-5">
+          <div className="flex flex-col items-center justify-center w-full h-full md:gap- mt-10">
             <h1>{mode} Game Started</h1>
 
             {/* Layout wrapper */}
-            <div className="flex flex-col items-center justify-center w-full h-full md:flex-row md:gap-6">
+            <div className="flex flex-col items-center justify-center w-full h-full md:gap-6">
               {/* Game Boar  */}
               <div className="flex items-center justify-center">
                 <div className="w-full aspect-square max-w-[400px]">
@@ -359,11 +356,11 @@ const Home = () => {
       {(startPlay && mode === 'Custom') && (
         <>
           {/* Main Content */}
-          <div className="flex flex-col items-center justify-center w-full h-full md:gap-6 mt-5">
+          <div className="flex flex-col items-center justify-center w-full h-full md:gap-6 mt-10">
             <h1>{mode} Game Started</h1>
 
             {/* Layout wrapper */}
-            <div className="flex flex-col items-center justify-center w-full h-full md:flex-row md:gap-6">
+            <div className="flex flex-col items-center justify-center w-full h-full md:gap-6">
               {/* Game Boar  */}
               <div className="flex items-center justify-center">
                 <div className="w-full aspect-square max-w-[400px]">

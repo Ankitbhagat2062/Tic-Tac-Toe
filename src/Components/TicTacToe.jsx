@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { useSelector } from 'react-redux';
 import { ToastContainer, toast } from 'react-toastify';
 import { useShallow } from 'zustand/shallow';
 
@@ -22,7 +21,9 @@ function TicTacToe() {
     setCurrentPlayer,
     winCells,
     setRoomId,
-    setBoardState
+    setBoardState,
+    setWinConditions,
+    winConditions
   } = useOnlinePlayStore(
     useShallow((state) => ({
       boardState: state.boardState,
@@ -37,13 +38,20 @@ function TicTacToe() {
       winCells: state.winCells,
       setRoomId: state.setRoomId,
       setBoardState: state.setBoardState,
+      setWinConditions: state.setWinConditions,
+      winConditions: state.winConditions,
     }))
   );
 
   const { play, loop, socket } = useOnlinePlayStore();
 
-  const playerState = useSelector((state) => state.game.playerState)
-  const player = useSelector((state) => state.game.player)
+  const playerState = useOnlinePlayStore((state) => state.playerState);
+  const player = useOnlinePlayStore((state) => state.player);
+
+  
+    const customWin = useOnlinePlayStore((state) => state.customWin);
+    const customSize = useOnlinePlayStore((state) => state.customSize);
+  
   const overlayRef = useRef(null);
   const totalGameWonRef = useRef(null);
   const boardElRef = useRef(null);
@@ -52,8 +60,7 @@ function TicTacToe() {
   const playerSymbolRef = useRef(playerSymbol);
 
   const setRef = useOnlinePlayStore((s) => s.setRef);
-  const { createRoom, joinRoom, newGame, boardElClick, handleGameOver, checkDraw, checkWinner, getWinningCells, aiMove } = useOnlinePlayStore();
-  // Redux dispatch
+  const { createRoom, joinRoom, newGame, boardElClick, handleGameOver, checkDraw, checkWinner, generateWinningPatterns, aiMove } = useOnlinePlayStore();
 
   useEffect(() => {
     setRef("msg", msgRef.current);
@@ -68,6 +75,11 @@ function TicTacToe() {
   useEffect(() => {
     playerSymbolRef.current = playerSymbol;
   }, [playerSymbol]);
+
+  useEffect(() => {
+    const winConditions = generateWinningPatterns(customSize, customSize, customWin);
+    setWinConditions(winConditions);
+  }, [generateWinningPatterns, setWinConditions , customSize , customWin])
 
   const makeMove = (index) => {
     // If it's the very first turn, only Player X can play
@@ -89,7 +101,7 @@ function TicTacToe() {
       // Only emit move if cell is empty and it is your turn
       if (boardState[index] === null && playerSymbol === currentPlayer) {
         play("clickSoundRef");
-        socket.emit("makeMove", roomId, index, playerSymbol);
+        socket.emit("makeMove", roomId, index, playerSymbol, winConditions);
       }
     }
     // ---------- OFFLINE: HUMAN vs AI ----------
@@ -107,9 +119,9 @@ function TicTacToe() {
       play("clickSound");
 
       // check win/draw
-      const winner = checkWinner(newBoard);
-      if (winner) {
-        handleGameOver(`Player ${winner} wins!`, winner, getWinningCells(newBoard));
+      const winner = checkWinner(newBoard, customSize, customSize, customWin);
+      if (winner?.winner) {
+        handleGameOver(`Player ${winner?.winner} wins!`, winner?.winner, winner?.cells);
         return;
       }
       if (checkDraw(newBoard)) {
@@ -129,7 +141,7 @@ function TicTacToe() {
         key={index}
         className={`${showWinLine && winCells.includes(index)
           ? '!bg-[#4CAF50] hover:*:bg-[#83e286] text-white font-bold transition duration-300'
-          : 'bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] hover:bg-[linear-gradient(78deg,#7c90ee_0%,#c8c2c2_100%)]'} cell  `}
+          : 'bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] hover:bg-[linear-gradient(78deg,#7c90ee_0%,#c8c2c2_100%)]'} cell md:w-[100px] w-[60px] `}
         onClick={() => makeMove(index)}
       >
         {value}
@@ -146,30 +158,32 @@ function TicTacToe() {
         <div className="board-wrapper relative">
           <div className="flex flex-col items-center justify-center gap-2.5">
             {playerState === 'online' && (
-              <>
-                <div className="socket-test flex justify-center items-center">
-                  <div ref={msgRef}></div>
-                </div>
-                <div className="room-controls flex justify-center items-center">
-                  <input
-                    id="roomInput"
-                    value={roomId}
-                    onChange={(e) => setRoomId(e.target.value)}
-                    placeholder="Enter Room ID"
-                  />
-                  <button id="createBtn" onClick={() => createRoom("online")}>
-                    Create Room
-                  </button>
-                  <button id="joinBtn" onClick={() => joinRoom(roomId)}>
-                    Join Room
-                  </button>
-                </div>
-              </>
+            <>
+              <div className="socket-test flex justify-center items-center">
+                <div ref={msgRef}></div>
+              </div>
+              <div className="room-controls flex justify-center items-center">
+                <input
+                  id="roomInput"
+                  value={roomId || ' '}
+                  onChange={(e) => setRoomId(e.target.value)}
+                  placeholder="Enter Room ID"
+                />
+                <button id="createBtn" onClick={() => createRoom("online")}>
+                  Create Room
+                </button>
+                <button id="joinBtn" onClick={() => joinRoom(roomId)}>
+                  Join Room
+                </button>
+              </div>
+            </>
             )}
 
             <div className="game-area">
               <div id="status">{status}</div>
-              <div ref={boardElRef} id="board" onClick={boardElClick} className="board bg-blue-600">
+              <div ref={boardElRef} id="board" onClick={boardElClick} className={`board bg-blue-600 grid-cols-[repeat(${customSize},60px)] grid-rows-[repeat(${customSize},60px)] md:grid-cols-[repeat(${customSize},100px)] md:grid-rows-[repeat(${customSize},100px)]`} 
+              style={{ gridTemplateColumns: `repeat(${customSize}, 100px)`, gridTemplateRows: `repeat(${customSize}, 100px)` }}
+              >
                 {renderBoard()}
               </div>
               <div ref={lineRef}

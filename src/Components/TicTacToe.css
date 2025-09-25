@@ -83,8 +83,8 @@
 
 .board {
   display: grid;
-  grid-template-columns: repeat(3, 100px);
-  grid-template-rows: repeat(3, 100px);
+  /* grid-template-columns: repeat(3, 100px);
+  grid-template-rows: repeat(3, 100px); */
   gap: 5px;
   padding: 10px;
   border-radius: 10px;
@@ -139,10 +139,6 @@
 
 /* Responsive design */
 @media (max-width: 600px) {
-  .board {
-    grid-template-columns: repeat(3, 80px);
-    grid-template-rows: repeat(3, 80px);
-  }
 
   .cell {
     font-size: 36px;

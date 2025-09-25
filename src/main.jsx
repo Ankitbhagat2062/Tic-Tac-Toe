@@ -42,7 +42,7 @@ const router = createBrowserRouter([
   {
     path: '/game/ai',
     element:
-        <TicTacToe />
+      <PrivateRoute >  <TicTacToe /></PrivateRoute>
   },
 ]);
 
