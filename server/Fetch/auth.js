@@ -17,7 +17,6 @@ const fetchUser = async (req, res) => {
             imageUrl: user.profilePicture,
         };
         
-        console.log(user)
         res.status(200).json({ userProfile });
     } catch (error) {
         console.error('Error fetching user:', error);
