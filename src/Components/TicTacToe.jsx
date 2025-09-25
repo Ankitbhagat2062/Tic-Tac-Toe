@@ -141,7 +141,7 @@ function TicTacToe() {
         key={index}
         className={`${showWinLine && winCells.includes(index)
           ? '!bg-[#4CAF50] hover:*:bg-[#83e286] text-white font-bold transition duration-300'
-          : 'bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] hover:bg-[linear-gradient(78deg,#7c90ee_0%,#c8c2c2_100%)]'} cell md:w-[100px] w-[60px] `}
+          : 'bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] hover:bg-[linear-gradient(78deg,#7c90ee_0%,#c8c2c2_100%)]'} cell md:w-[100px] md:h-[100px] w-[60px] h-[60px] `}
         onClick={() => makeMove(index)}
       >
         {value}
@@ -181,8 +181,8 @@ function TicTacToe() {
 
             <div className="game-area">
               <div id="status">{status}</div>
-              <div ref={boardElRef} id="board" onClick={boardElClick} className={`board bg-blue-600 grid-cols-[repeat(${customSize},60px)] grid-rows-[repeat(${customSize},60px)] md:grid-cols-[repeat(${customSize},100px)] md:grid-rows-[repeat(${customSize},100px)]`} 
-              style={{ gridTemplateColumns: `repeat(${customSize}, 100px)`, gridTemplateRows: `repeat(${customSize}, 100px)` }}
+              <div ref={boardElRef} id="board" onClick={boardElClick} className={`board bg-blue-600`} 
+              style={{ gridTemplateColumns: `repeat(${customSize}, 1fr)`, gridTemplateRows: `repeat(${customSize}, 1fr)` }}
               >
                 {renderBoard()}
               </div>
