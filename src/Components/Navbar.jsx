@@ -12,30 +12,27 @@ import useAuthStore from "../store/useAuthStore";
 
 const Navbar = () => {
     const { token, logout } = useApp();
-      const { user, usersProfile } = useAuthStore();
+    const { user } = useAuthStore();
     const location = useLocation();
     const dispatch = useDispatch();
     const currentPath = useSelector((state) => state.navigation.currentPath);
-
     useEffect(() => {
         dispatch(setCurrentPath(location.pathname));
     }, [location.pathname, dispatch]);
 
     const userProfile = {
         name: user?.username,
-        email: usersProfile?.email,
-        imageUrl: usersProfile?.imageUrl,
+        email: user?.email,
+        imageUrl: user?.profilePicture,
     }
     const navigation = [
         { name: 'Dashboard', to: '/', current: currentPath === '/' },
         { name: 'About', to: '/about', current: currentPath === '/about' },
-        { name: 'Projects', to: '#', current: currentPath === '#' },
-        { name: 'Calendar', to: '#', current: currentPath === '#' },
-        { name: 'Reports', to: '#', current: currentPath === '#' },
+        { name: 'Play Online', to: '/join', current: currentPath === '/join' },
     ]
     const userNavigation = [
         { name: user?.username, to: '/' },
-        { name: 'Settings', to: '/setting' },
+        { name: 'Settings', to: '#' },
         { name: 'Sign Out', onClick: logout },
     ]
 
@@ -48,13 +45,15 @@ const Navbar = () => {
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 items-center justify-between">
                         <div className="flex items-center">
-                            <div className="shrink-0 flex gap-1 items-center justify-center">
-                                <img
-                                    alt="Your Company"
-                                    src="./tic-tac-toe.png"
-                                    className="size-8"
-                                />
-                               <span> Tic Tac Toe </span>
+                            <div className="flex lg:flex-1">
+                                <a href="/" className="-m-1.5 p-1.5 flex items-center justify-between gap-2.5">
+                                    <img
+                                        alt="Game"
+                                        src="./images/tic-tac-toe.png"
+                                        className="h-8 w-auto"
+                                    />
+                                    <span className='text-white'>Tic Tac Toe</span>
+                                </a>
                             </div>
                             <div className="hidden md:block">
                                 <div className="ml-10 flex items-baseline space-x-4">
@@ -78,21 +77,20 @@ const Navbar = () => {
                             <div className="ml-4 flex items-center md:ml-6">
                                 {token ? (
                                     <>
-                                     <button
-                                        type='button'
-                                        className="!cursor-pointer flex items-center gap-1 justify-center relative rounded-full p-1 text-gray-400 hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500"
-                                    >
-                                        <span className="absolute -inset-1.5" />
-                                        <span className="sr-only">View notifications</span>
-                                        <BellIcon aria-hidden="true" className="size-6" />
-                                    </button>
+                                        <button
+                                            type='button'
+                                            className="!cursor-pointer flex items-center gap-1 justify-center relative rounded-full p-1 text-gray-400 hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500">
+                                            <span className="absolute -inset-1.5" />
+                                            <span className="sr-only">View notifications</span>
+                                            <BellIcon aria-hidden="true" className="size-6" />
+                                        </button>
                                         {/* Profile dropdown */}
                                         <Menu as="div" className="relative ml-3">
                                             <MenuButton className="relative flex h-10 w-10 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
                                                 <span className="absolute -inset-1.5" />
                                                 <span className="sr-only">Open user menu</span>
                                                 <img
-                                                    alt=""
+                                                    alt={userProfile.name}
                                                     src={userProfile.imageUrl}
                                                     className="h-full w-full rounded-full outline-1 outline-white/10 -outline-offset-1 object-cover"
                                                 />
@@ -167,47 +165,49 @@ const Navbar = () => {
                             </DisclosureButton>
                         ))}
                     </div>
-                    <div className="border-t border-white/10 pt-4 pb-3">
-                        <div className="flex items-center px-5">
-                            <div className="shrink-0 size-8">
-                                <img
-                                    alt="./tic-tac-toe.png"
-                                    src={userProfile.imageUrl}
-                                    className="h-full w-full rounded-full outline-1 outline-white/10 -outline-offset-1"
-                                />
+                    {token && (
+                        <div className="border-t border-white/10 pt-4 pb-3">
+                            <div className="flex items-center px-5">
+                                <div className="shrink-0 size-8">
+                                    <img
+                                        alt={userProfile.name}
+                                        src={userProfile.imageUrl}
+                                        className="h-full w-full rounded-full outline-1 outline-white/10 -outline-offset-1"
+                                    />
+                                </div>
+                                <div className="ml-3">
+                                    <div className="text-base/5 font-medium text-white">{userProfile.name}</div>
+                                    <div className="text-sm font-medium text-gray-400">{userProfile.email}</div>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="relative ml-auto flex shrink-0 rounded-full p-1 text-gray-400 hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500"
+                                >
+                                    <span className="absolute -inset-1.5" />
+                                    <span className="sr-only">View notifications</span>
+                                    <BellIcon aria-hidden="true" className="size-6" />
+                                </button>
                             </div>
-                            <div className="ml-3">
-                                <div className="text-base/5 font-medium text-white">{userProfile.name}</div>
-                                <div className="text-sm font-medium text-gray-400">{userProfile.email}</div>
+                            <div className="mt-3 space-y-1 px-2">
+                                {userNavigation.map((item) => {
+                                    const buttonProps = {
+                                        className: "block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-white/5 hover:text-white"
+                                    };
+                                    if (item.to) buttonProps.to = item.to;
+                                    if (item.onClick) buttonProps.onClick = item.onClick;
+                                    return (
+                                        <DisclosureButton
+                                            key={item.name}
+                                            as={item.onClick ? "button" : "a"}
+                                            {...buttonProps}
+                                        >
+                                            {item.name}
+                                        </DisclosureButton>
+                                    );
+                                })}
                             </div>
-                            <button
-                                type="button"
-                                className="relative ml-auto flex shrink-0 rounded-full p-1 text-gray-400 hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500"
-                            >
-                                <span className="absolute -inset-1.5" />
-                                <span className="sr-only">View notifications</span>
-                                <BellIcon aria-hidden="true" className="size-6" />
-                            </button>
                         </div>
-                        <div className="mt-3 space-y-1 px-2">
-                            {userNavigation.map((item) => {
-                                const buttonProps = {
-                                    className: "block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-white/5 hover:text-white"
-                                };
-                                if (item.to) buttonProps.to = item.to;
-                                if (item.onClick) buttonProps.onClick = item.onClick;
-                                return (
-                                    <DisclosureButton
-                                        key={item.name}
-                                        as={item.onClick ? "button" : "a"}
-                                        {...buttonProps}
-                                    >
-                                        {item.name}
-                                    </DisclosureButton>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    )}
                 </DisclosurePanel>
             </Disclosure>
         </div>

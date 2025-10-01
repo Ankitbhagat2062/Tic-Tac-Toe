@@ -20,10 +20,11 @@ const About = () => {
             <div className="flex-1 max-w-md">
               <div className="relative">
                 <img 
-                  src="./tic-tac-toe.png" 
+                  src="./images/tic-tac-toe.png" 
                   alt="Tic Tac Toe Game" 
                   className="w-full max-w-sm mx-auto rounded-2xl shadow-2xl"
                 />
+                <span className='sr-only'> Tic Tac Toe </span>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl"></div>
               </div>
             </div>

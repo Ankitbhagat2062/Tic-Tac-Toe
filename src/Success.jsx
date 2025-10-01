@@ -14,7 +14,7 @@ function Success() {
      console.log('Token stored in localStorage:', token);
      // Redirect to home after a short delay
       setTimeout(() => {
-        navigate('/home');
+        navigate('/');
      }, 2000);
   }
   }, [navigate]);
@@ -26,7 +26,7 @@ function Success() {
       <p>Redirecting to home page...</p>
       <br />
       <button>
-        <Link to='/home'>Go to Home</Link>
+        <Link to='/'>Go to Home</Link>
       </button>
      </div>
   );

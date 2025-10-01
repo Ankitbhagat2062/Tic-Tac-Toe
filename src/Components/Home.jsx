@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { FiSettings, FiPlus, FiMinus } from "react-icons/fi";
+import { FiPlus, FiMinus, } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { IoMdBrush } from "react-icons/io";
-import { FaExchangeAlt } from "react-icons/fa";
+import { FaBookOpen, FaChild, FaExchangeAlt } from "react-icons/fa";
 import { CgArrowsExchangeAltV } from "react-icons/cg";
+import { useShallow } from 'zustand/shallow';
 
 import useAuthStore from "../store/useAuthStore";
 import { initializeSocket, disconnectSocket } from '../services/socketService';
@@ -11,21 +12,23 @@ import useApp from '../hooks/useApp';
 import TicTacToe from "./TicTacToe";
 import Navbar from "./Navbar";
 
-import { useShallow } from 'zustand/shallow';
 import useOnlinePlayStore from "../store/onlinePlayStore";
+import { Player, SettingsButton } from './icons'
+import LudoLobby from "./LudoLobby";
+import { shadow } from "../css/colors";
 
 const Home = () => {
   const { token, } = useApp();
 
   const playerSymbol = useOnlinePlayStore((state) => state.playerSymbol);
-  const currentPlayer = useOnlinePlayStore((state) => state.currentPlayer);
   const { initsocketListeners, cleanup } = useOnlinePlayStore();
 
-  const { fetchUser, fetchUserProfile } = useAuthStore();
+  const { fetchUser, user } = useAuthStore();
 
-  const { setPlayer, setStartPlay, setMode, setPlayerState, setCustomWin, setCustomSize,setBoardState } = useOnlinePlayStore(
+  const { setPlayer, setOpponentUser, setStartPlay, setMode, setPlayerState, setCustomWin, setCustomSize, setBoardState } = useOnlinePlayStore(
     useShallow((state) => ({
       setPlayer: state.setPlayer,
+      setOpponentUser: state.setOpponentUser,
       setStartPlay: state.setStartPlay,
       setMode: state.setMode,
       setPlayerState: state.setPlayerState,
@@ -40,13 +43,14 @@ const Home = () => {
   const startPlay = useOnlinePlayStore((state) => state.startPlay);
   const customWin = useOnlinePlayStore((state) => state.customWin);
   const customSize = useOnlinePlayStore((state) => state.customSize);
-  const mode = useOnlinePlayStore((state) => state.mode)
+  const mode = useOnlinePlayStore((state) => state.mode);
   const playerState = useOnlinePlayStore((state) => state.playerState)
-
+  const opponentSymbol = useOnlinePlayStore((state) => state.opponentSymbol)
+  const opponentUser = useOnlinePlayStore((state) => state.opponentUser)
+  const { timer } = useOnlinePlayStore();
   useEffect(() => {
     fetchUser();
-    fetchUserProfile();
-  }, [token, fetchUser, fetchUserProfile]);
+  }, [token, fetchUser,]);
 
   // start socket listeners
   useEffect(() => {
@@ -69,92 +73,142 @@ const Home = () => {
   }, [token, cleanup, initsocketListeners]);
 
   const [progress, setProgress] = useState(0);
+  const { startTimer , showSetting, setShowSetting } = useOnlinePlayStore();
 
   // Simulate loading progress
   useEffect(() => {
-    const timer = setInterval(() => {
+    const loader = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
-          clearInterval(timer);
+          clearInterval(loader);
           return 100;
         }
         return prev + 1;
       });
     }, 10); // ~4s
-    return () => clearInterval(timer);
+    return () => clearInterval(loader);
   }, []);
-  const Player = ({ player, symbol }) => {
-    return (
-      <>
-        <div className="flex flex-col items-center justify-center bg-blue-700 rounded-lg md:p-6 md:w-32 md:h-40 w-18 h-24 shadow-lg">
-          <div className="md:w-16 md:h-20 w-7 h-9 flex items-center justify-center bg-blue-900 rounded-md mb-2">
-            <span className="md:text-6xl text-2xl text-cyan-400 font-extrabold">{symbol}</span>
-          </div>
-          <span className="text-white font-semibold md:text-lg text-sm">{player}</span>
-        </div>
-      </>
-    )
-  }
   const handleSelectGame = (selectedMode) => {
     if (selectedMode === 'Classic') {
-      if (mode.length === 0) {
-        setMode("Classic");
-      }
-      else {
-        setPlayerState("offline");
-        setPlayer("AI");
-      };
-      if (player.length > 0) {
-        setPlayer("Player 2");
-      }
-
+      setMode("Classic");
     } else if (selectedMode === 'Custom') {
-      if (mode.length === 0) {
-        setMode("Custom");
-      }
-      else {
-        setPlayer("Player 1");
-      };
-      if (player.length > 0) {
-        setPlayerState("online");
-      }
+      setMode("Custom");
     }
   }
   const handleStartGame = () => {
     if (!startPlay) {
       setStartPlay(true);
       setBoardState(Array(customSize * customSize).fill(null));
+      startTimer();
     }
   }
-  const Button = ({ selectedMode }) => {
-    if (mode.length === 0) {
-      return <span>{selectedMode}</span>
-    }
-    else if (mode.length > 0 && selectedMode === 'Classic') {
-      if (player.length === 0) return <span>AI</span>
-      if (player.length > 0) return <span>Offline</span>
-    } else if (mode.length > 0 && selectedMode === 'Custom') {
-      if (player.length === 0) return <span>Player</span>
-      if (player.length > 0) return <span>Online</span>
-    }
-  }
+  useEffect(() => {
+    console.log(playerState , opponentUser , player , mode , startPlay , timer)
+  }, [player , mode , playerState , opponentUser , startPlay , timer]);
   return (
     <div className="bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] font-[Arial,sans-serif] 
   relative min-h-screen box-border flex flex-col items-center justify-center text-white overflow-hidden">
 
       {/* Header with Settings */}
       <AnimatePresence>
-        <motion.div className={`${startPlay} fixed top-0 z-20 w-full`}>
+        <motion.div className={`fixed top-0 z-20 w-full`}>
           <Navbar />
         </motion.div>
       </AnimatePresence>
-
+      <div onClick={() => setShowSetting(!showSetting)} className={`${shadow} overflow-hidden`}>
+        <img src="./settings.gif" alt="Setting" className="brightness-110 w-8 h-8 grayscale contrast-[999] mix-blend-multiply bg-transparent" />
+      </div>
+      {showSetting && (
+        <>
+          <SettingsButton />
+        </>
+      )}
       {/* Floating animated dots background */}
       <div className="absolute inset-0 opacity-20 pointer-events-none -z-10">
-        <div className="dots"></div>
+        <div className="w-full h-full animate-[moveDots_10s_linear_infinite] bg-[radial-gradient(rgba(255,255,255,0.2)_1px,transparent_1px)] bg-[size:24px_24px]"></div>
       </div>
+      {(player.length === 0 && mode.length === 0) && (
+        <div className="flex flex-col md:flex-row items-center justify-center gap-8 p-6 max-w-4xl mx-auto">
+          <motion.div
+            className="relative cursor-pointer group hover:scale-105 transition-transform duration-300"
+            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            whileHover={{ scale: 1.05 }}
+            onClick={() => {
+              setPlayerState("online");
+              setPlayer(user.username);
+            }}
+          >
+            <img
+              src="/images/Play_Online.png"
+              alt="Online Multiplayer"
+              className="w-full h-full object-cover"
+              width={64}
+            />
+          </motion.div>
 
-      {((playerState.length === 0 && player !== 'AI') && !startPlay) && (
+          <motion.div
+            className="relative cursor-pointer rounded-2xl w-full overflow-hidden group hover:scale-105 transition-transform duration-300"
+            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+            whileHover={{ scale: 1.05 }}
+            onClick={() => {
+              setPlayerState("offline");
+              setOpponentUser({
+                username: "AI",
+                profilePicture: "https://lh3.googleusercontent.com/a/ACg8ocKcsVMR5kXAqIxXZyDvqymKfKOKFPhBjr3u9caGp1HmqtuGvQ=s96-c",
+              });
+              setPlayer(user.username)
+            }}
+          >
+            <img
+              src="/images/Play_With_Computer.png"
+              alt="VS Computer"
+              className="w-full object-cover block"
+              width={64}
+            />
+          </motion.div>
+          <motion.div
+            className="relative cursor-pointer items-center justify-center flex rounded-2xl w-full group hover:scale-105 transition-transform duration-300"
+            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+            whileHover={{ scale: 1.05 }}
+            onClick={() => {
+              setPlayerState("offline");
+              setOpponentUser({
+                username: "Player 2",
+                profilePicture: "https://lh3.googleusercontent.com/a/ACg8ocKcsVMR5kXAqIxXZyDvqymKfKOKFPhBjr3u9caGp1HmqtuGvQ=s96-c",
+              });
+              setPlayer(user.username)
+            }}
+          >
+            <div className={`relative p-1 border-4 border-[#6e63c4]  w-64 h-auto bg-yellow-500 rounded-2xl shadow-lg ${shadow}`}>
+              {/* Blue top section */}
+              <div className="relative rounded-t-2xl h-28 bg-blue-700 flex items-center justify-center p-4">
+                <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2">
+                  <FaChild size={50} color="yellow" />
+                </div>
+                <div className="absolute top-1/2 right-1/4 -translate-x-1/2 -translate-y-1/2">
+                  <FaBookOpen size={50} color="yellow" />
+                </div>
+                {/* You can add a subtle diamond shape in the middle if desired, similar to Ludo King */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rotate-45 bg-yellow-400"></div>
+              </div>
+
+              {/* Yellow bottom section with text */}
+              <div className="flex items-center justify-center py-4 px-2">
+                <span className="text-blue-800 text-3xl font-bold uppercase tracking-wide">
+                  Pass N Play
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+      {((mode.length === 0 && playerState === 'offline') && !startPlay) && (
         <>
           {/* Logo */}
           <div className="flex items-center space-x-2 relative">
@@ -209,7 +263,7 @@ const Home = () => {
                 >
                   <button onClick={() => { handleSelectGame("Classic") }}
                     className="px-6 py-2 cursor-pointer bg-blue-800 border-2 border-blue-400 rounded-xl text-lg shadow-lg">
-                    <Button selectedMode={"Classic"} />
+                    Classic
                   </button>
                 </motion.div>
                 <motion.div
@@ -220,21 +274,20 @@ const Home = () => {
                 >
                   <button onClick={() => { handleSelectGame("Custom") }}
                     className="px-6 py-2 cursor-pointer bg-blue-800 border-2 border-blue-400 rounded-xl text-lg shadow-lg">
-                    <Button selectedMode={"Custom"} />
+                    Custom
                   </button>
                 </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
         </>
-      )
-      }
+      )}
       {(mode === 'Classic' && player.length > 0 && playerState.length > 0 && !startPlay) && (
         <>
           <div className="flex flex-col items-center space-y-8">
             <div className="flex items-center sm:space-x-12 flex-col sm:flex-row sm:mt-0 mt-10">
               {/* Player 1 Card */}
-              <Player player={"Player 1"} symbol={"O"} />
+              <Player player={player || "Player X"} symbol={playerSymbol || "X"} />
               {/* Middle Buttons */}
               <div className="flex flex-col items-center justify-center gap-5">
                 <div >
@@ -258,7 +311,7 @@ const Home = () => {
               </div>
 
               {/* Computer Card */}
-              <Player player={player} symbol={"X"} />
+              <Player player={opponentUser.username || "Player O"} symbol={opponentSymbol || "O"} />
             </div>
 
             {/* Start Button */}
@@ -276,7 +329,13 @@ const Home = () => {
             {/* Board Size */}
             <div className="flex items-center justify-center space-x-4 mb-4">
               <button
-                onClick={() => setCustomSize(Math.max(3, customSize - 1))}
+                onClick={() => {
+                  const newSize = Math.max(3, customSize - 1);
+                  if (newSize < customWin) {
+                    setCustomWin(newSize);
+                  }
+                  setCustomSize(newSize);
+                }}
                 className="bg-blue-700 hover:bg-blue-800 rounded-full p-2 shadow-md transition"
                 aria-label="Decrease board size"
               >
@@ -306,7 +365,7 @@ const Home = () => {
                 {customWin} win
               </div>
               <button
-                onClick={() => setCustomWin(Math.min(5, customWin + 1))}
+                onClick={() => setCustomWin(Math.min(5, customSize, customWin + 1))}
                 className="bg-blue-700 hover:bg-blue-800 rounded-full p-2 shadow-md transition"
                 aria-label="Increase win condition"
               >
@@ -322,66 +381,12 @@ const Home = () => {
           </div>
         </>
       )}
-      {(startPlay && mode === 'Classic') && (
-        <>
-          {/* Main Content */}
-          <div className="flex flex-col items-center justify-center w-full h-full md:gap- mt-10">
-            <h1>{mode} Game Started</h1>
-
-            {/* Layout wrapper */}
-            <div className="flex flex-col items-center justify-center w-full h-full md:gap-6">
-              {/* Game Boar  */}
-              <div className="flex items-center justify-center">
-                <div className="w-full aspect-square max-w-[400px]">
-                  <TicTacToe />
-                </div>
-              </div>
-              <div className="flex gap-1 items-start justify-between w-full px-4">
-                {/* Player 1 */}
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <Player player="Player 1" symbol="X" />
-                  <h1 className="text-sm md:text-base lg:text-lg text-center">
-                    {(playerSymbol === currentPlayer && currentPlayer) && `Your Turn ${currentPlayer}`}
-                  </h1>
-                </div>
-                {/* Player 2 */}
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <Player player={player} symbol="O" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
+      {playerState === 'online' && !startPlay && (
+        <LudoLobby />
       )}
-      {(startPlay && mode === 'Custom') && (
+      {(startPlay) && (
         <>
-          {/* Main Content */}
-          <div className="flex flex-col items-center justify-center w-full h-full md:gap-6 mt-10">
-            <h1>{mode} Game Started</h1>
-
-            {/* Layout wrapper */}
-            <div className="flex flex-col items-center justify-center w-full h-full md:gap-6">
-              {/* Game Boar  */}
-              <div className="flex items-center justify-center">
-                <div className="w-full aspect-square max-w-[400px]">
-                  <TicTacToe />
-                </div>
-              </div>
-              <div className="flex gap-1 items-start justify-between w-full px-4">
-                {/* Player 1 */}
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <Player player="Player 1" symbol="X" />
-                  <h1 className="text-sm md:text-base lg:text-lg text-center">
-                    {(playerSymbol === currentPlayer && currentPlayer) && `Your Turn ${currentPlayer}`}
-                  </h1>
-                </div>
-                {/* Player 2 */}
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <Player player={player} symbol="O" />
-                </div>
-              </div>
-            </div>
-          </div>
+          <TicTacToe />
         </>
       )}
     </div>

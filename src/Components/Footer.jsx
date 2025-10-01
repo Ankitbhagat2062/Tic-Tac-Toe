@@ -1,25 +1,6 @@
 import React from 'react'
 import { FaFacebookF, FaInstagram, FaYoutube, } from 'react-icons/fa';
-import { } from "react-icons/fa";
-const GooglePlayIcon = ({ className = "w-8 h-8" }) => (
-  <svg
-    viewBox="0 0 512 512"
-    className={className}
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    {/* Main big triangle background (Sky Blue) */}
-    <path d="M96 32 L416 256 L96 480 Z" fill="#00AEEF" />
-
-    {/* Green region (upper median slice) */}
-    <path d="M96 32 L256 256 L416 256 Z" fill="#32A350" />
-
-    {/* Red region (lower median slice) */}
-    <path d="M96 480 L256 256 L416 256 Z" fill="#FF4229" />
-
-    {/* Yellow small center (intersection of medians) */}
-    <path d="M96 32 L96 480 L256 256 Z" fill="#FFD500" />
-  </svg>
-);
+import { GooglePlayIcon } from "./icons";
 
 const Footer = () => {
     return (

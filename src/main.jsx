@@ -14,6 +14,7 @@ import PrivateRoute from './PrivateRoute.jsx';
 import About from './Components/About.jsx';
 
 import './index.css';
+import LudoLobby from './Components/LudoLobby.jsx';
 
 // Component to conditionally render App or Home based on token
 export const ConditionalHome = () => {
@@ -40,9 +41,15 @@ const router = createBrowserRouter([
     element: <About />,
   },
   {
-    path: '/game/ai',
+    path: '/join',
     element:
-      <PrivateRoute >  <TicTacToe /></PrivateRoute>
+      <PrivateRoute>
+        <LudoLobby />,
+      </PrivateRoute>
+  },
+  {
+    path: '/game',
+    element: <TicTacToe />
   },
 ]);
 

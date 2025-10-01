@@ -1,231 +1,67 @@
-import React, { useEffect, useRef } from 'react';
-import { ToastContainer, toast } from 'react-toastify';
-import { useShallow } from 'zustand/shallow';
+import { ToastContainer, } from 'react-toastify';
 
 
-import './TicTacToe.css';
 import useOnlinePlayStore from "../store/onlinePlayStore";
+import { GameBoard, Player, SettingsButton } from './icons';
+import { shadow } from '../css/colors';
 
 function TicTacToe() {
-
-  // pick the state values you need
-  const {
-    boardState,
-    status,
-    showWinLine,
-    winLineStyle,
-    playerSymbol,
-    setPlayerSymbol,
-    roomId,
-    currentPlayer,
-    setCurrentPlayer,
-    winCells,
-    setRoomId,
-    setBoardState,
-    setWinConditions,
-    winConditions
-  } = useOnlinePlayStore(
-    useShallow((state) => ({
-      boardState: state.boardState,
-      status: state.status,
-      showWinLine: state.showWinLine,
-      winLineStyle: state.winLineStyle,
-      playerSymbol: state.playerSymbol,
-      setPlayerSymbol: state.setPlayerSymbol,
-      roomId: state.roomId,
-      currentPlayer: state.currentPlayer,
-      setCurrentPlayer: state.setCurrentPlayer,
-      winCells: state.winCells,
-      setRoomId: state.setRoomId,
-      setBoardState: state.setBoardState,
-      setWinConditions: state.setWinConditions,
-      winConditions: state.winConditions,
-    }))
-  );
-
-  const { play, loop, socket } = useOnlinePlayStore();
-
-  const playerState = useOnlinePlayStore((state) => state.playerState);
-  const player = useOnlinePlayStore((state) => state.player);
-
-  
-    const customWin = useOnlinePlayStore((state) => state.customWin);
-    const customSize = useOnlinePlayStore((state) => state.customSize);
-  
-  const overlayRef = useRef(null);
-  const totalGameWonRef = useRef(null);
-  const boardElRef = useRef(null);
-  const lineRef = useRef(null);
-  const msgRef = useRef(null);
-  const playerSymbolRef = useRef(playerSymbol);
-
-  const setRef = useOnlinePlayStore((s) => s.setRef);
-  const { createRoom, joinRoom, newGame, boardElClick, handleGameOver, checkDraw, checkWinner, generateWinningPatterns, aiMove } = useOnlinePlayStore();
-
-  useEffect(() => {
-    setRef("msg", msgRef.current);
-    setRef("board", boardElRef.current);
-    setRef("overlay", overlayRef.current);
-    setRef("totalGameWon", totalGameWonRef.current);
-    setRef("line", lineRef.current);
-    setRef("playerSymbol", playerSymbol); // not a DOM node, just a value
-  }, [playerSymbol, setRef]);
-
-  // Update ref whenever playerSymbol changes
-  useEffect(() => {
-    playerSymbolRef.current = playerSymbol;
-  }, [playerSymbol]);
-
-  useEffect(() => {
-    const winConditions = generateWinningPatterns(customSize, customSize, customWin);
-    setWinConditions(winConditions);
-  }, [generateWinningPatterns, setWinConditions , customSize , customWin])
-
-  const makeMove = (index) => {
-    // If it's the very first turn, only Player X can play
-    if (playerState === 'online') {
-      if (boardState.every(c => c === null) && playerSymbol === "O") {
-        loop("bgMusic", false);  // set background music to loop
-        play("bgMusic");
-        toast("Player who created Room goes first!");
-        return;
-      }
-
-      // If it's not this player's turn
-      if (playerSymbol !== currentPlayer) {
-        play("wrongClickSound");
-        toast(`It's Player ${currentPlayer}'s turn!`);
-        return;
-      }
-
-      // Only emit move if cell is empty and it is your turn
-      if (boardState[index] === null && playerSymbol === currentPlayer) {
-        play("clickSoundRef");
-        socket.emit("makeMove", roomId, index, playerSymbol, winConditions);
-      }
-    }
-    // ---------- OFFLINE: HUMAN vs AI ----------
-    if (playerState === 'offline' && player === 'AI') {
-      aiMove(index);
-    }
-    // ---------- OFFLINE: HUMAN vs HUMAN (local) ----------
-    if (playerState === 'offline' && player !== 'AI') {
-      // use currentPlayer to decide which symbol to place
-      const symbol = currentPlayer || "X"; // ensure defined
-      const newBoard = [...boardState];
-      newBoard[index] = symbol;
-      setBoardState(newBoard);
-      setPlayerSymbol("X");
-      play("clickSound");
-
-      // check win/draw
-      const winner = checkWinner(newBoard, customSize, customSize, customWin);
-      if (winner?.winner) {
-        handleGameOver(`Player ${winner?.winner} wins!`, winner?.winner, winner?.cells);
-        return;
-      }
-      if (checkDraw(newBoard)) {
-        handleGameOver(`It's a draw!`, null, []);
-        return;
-      }
-
-      // toggle currentPlayer for next local turn
-      setCurrentPlayer(symbol === "X" ? "O" : "X");
-      return;
-    }
+  const { timer } = useOnlinePlayStore();
+  const player = useOnlinePlayStore((state) => state.player)
+  const showSetting = useOnlinePlayStore((state) => state.showSetting)
+  const setShowSetting = useOnlinePlayStore((state) => state.setShowSetting)
+  const playerSymbol = useOnlinePlayStore((state) => state.playerSymbol)
+  const currentPlayer = useOnlinePlayStore((state) => state.currentPlayer)
+  const mode = useOnlinePlayStore((state) => state.mode);
+  const opponentSymbol = useOnlinePlayStore((state) => state.opponentSymbol)
+  const opponentUser = useOnlinePlayStore((state) => state.opponentUser)
+  const formatTime = (t) => {
+    if (typeof t === "string") return t;
+    const minutes = Math.floor(t / 60).toString().padStart(2, "0");
+    const seconds = (t % 60).toString().padStart(2, "0");
+    return `${minutes}:${seconds}`;
   };
-
-  const renderBoard = () => {
-    return boardState.map((value, index) => (
-      <div
-        key={index}
-        className={`${showWinLine && winCells.includes(index)
-          ? '!bg-[#4CAF50] hover:*:bg-[#83e286] text-white font-bold transition duration-300'
-          : 'bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] hover:bg-[linear-gradient(78deg,#7c90ee_0%,#c8c2c2_100%)]'} cell md:w-[100px] md:h-[100px] w-[60px] h-[60px] `}
-        onClick={() => makeMove(index)}
-      >
-        {value}
-      </div>
-    ));
-  };
-  console.log(`PlayerSymbol is ${playerSymbol} and currentPlayer is ${currentPlayer}`)
   return (
     <>
       <ToastContainer />
-      <div className="text-black flex flex-col justify-center items-center gap-2.5 p-2.5 font-sans">
+      {/* Main Content */}
+      <div className="flex flex-col items-center justify-center w-full h-full md:gap- mt-10">
+        <h1>{mode} Game Started</h1>
+        <div onClick={() => setShowSetting(!showSetting)} className={`${shadow} overflow-hidden`}>
+          <img src="./settings.gif" alt="Setting" className="brightness-110 w-8 h-8 grayscale contrast-[999] mix-blend-multiply bg-transparent" />
+        </div>
+        {showSetting && (
+          <>
+            <SettingsButton />
+          </>
+        )}
+        <div className="absolute top-20 left-1/4 transform -translate-x-1/2 bg-white rounded-xl px-3 py-2 text-black font-bold shadow-lg flex items-center justify-center min-w-[100px] border-4 border-blue-700">
+          {formatTime(timer)}
+        </div>
 
-
-        <div className="board-wrapper relative">
-          <div className="flex flex-col items-center justify-center gap-2.5">
-            {playerState === 'online' && (
-            <>
-              <div className="socket-test flex justify-center items-center">
-                <div ref={msgRef}></div>
-              </div>
-              <div className="room-controls flex justify-center items-center">
-                <input
-                  id="roomInput"
-                  value={roomId || ' '}
-                  onChange={(e) => setRoomId(e.target.value)}
-                  placeholder="Enter Room ID"
-                />
-                <button id="createBtn" onClick={() => createRoom("online")}>
-                  Create Room
-                </button>
-                <button id="joinBtn" onClick={() => joinRoom(roomId)}>
-                  Join Room
-                </button>
-              </div>
-            </>
-            )}
-
-            <div className="game-area">
-              <div id="status">{status}</div>
-              <div ref={boardElRef} id="board" onClick={boardElClick} className={`board bg-blue-600`} 
-              style={{ gridTemplateColumns: `repeat(${customSize}, 1fr)`, gridTemplateRows: `repeat(${customSize}, 1fr)` }}
-              >
-                {renderBoard()}
-              </div>
-              <div ref={lineRef}
-                className={`win-line ${showWinLine ? '' : 'hidden'}`}
-                style={winLineStyle}
-              ></div>
+        {/* Layout wrapper */}
+        <div className="flex flex-col items-center justify-center w-full h-full md:gap-6">
+          {/* Game Boar  */}
+          <div className="flex items-center justify-center">
+            <div className="w-full aspect-square max-w-[400px]">
+              <GameBoard />
             </div>
           </div>
-
-        </div>
-        <div ref={overlayRef}
-          className={`board-overlay cursor-pointer absolute top-0 left-0 w-full h-full bg-cyan-600 text-white text-2xl font-bold 
-              flex justify-center items-center rounded-lg 
-              transition-opacity duration-400 ease-in-out z-50
-              ${showWinLine ? 'opacity-100 pointer-events-auto animate-fadeInText' : 'opacity-0 pointer-events-none'}`}
-        >
-          <div className="">
-            <div className=" relative rounded-2xl border-[6px] border-blue-800 p-10 text-center max-w-md w-full shadow-[0_8px_0_0_rgba(0,0,0,0.25)] ">
-              {/* Title */}
-              <h1 className="text-4xl font-extrabold text-blue-800 mb-4">
-                Game Over
+          <div className="flex gap-1 items-start justify-between w-full px-4">
+            {/* Player 1 */}
+            <div className="flex flex-col items-center justify-center gap-2">
+              <Player player={player || "Player X"} symbol={playerSymbol || "X"} />
+              <h1 className="text-sm md:text-base lg:text-lg text-center">
+                {(playerSymbol === currentPlayer && currentPlayer) && `Your Turn ${currentPlayer}`}
               </h1>
-
-              {/* Subtitle */}
-              <p ref={totalGameWonRef} className="text-white text-2xl font-bold mb-8" >
-              </p>
-
-              {/* Button */}
-              <button onClick={newGame}
-                className=" cursor-pointer bg-gradient-to-b from-blue-500 to-blue-700 text-white font-bold text-xl px-10 py-3 rounded-full border-4 border-blue-900 shadow-md hover:scale-105 transition-transform duration-200 ">
-                Continue
-              </button>
+            </div>
+            {/* Player 2 */}
+            <div className="flex flex-col items-center justify-center gap-2">
+              <Player player={opponentUser.username || "Player O"} symbol={opponentSymbol || "O"} />
+              {(opponentSymbol === currentPlayer && currentPlayer) && `${opponentUser.username} Turn ${opponentSymbol}`}
             </div>
           </div>
-
         </div>
-
-        <div id="container"></div>
-        <div id="result-message"></div>
-        <button id="new-game-btn" onClick={newGame}>
-          New Game
-        </button>
       </div>
     </>
   );

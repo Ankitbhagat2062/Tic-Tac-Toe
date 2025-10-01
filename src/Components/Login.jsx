@@ -41,7 +41,7 @@ function Login() {
             </button>
 
             {/* OR Divider */}
-            <div className="divider relative my-6 text-[#666666] text-sm max-w-[300px] mx-auto">
+            <div className="before:content-[''] before:absolute before:top-1/2 before:left-0 before:right-0 before:h-px before:bg-gray-200 relative my-6 text-[#666666] text-sm max-w-[300px] mx-auto">
               <span className='relative z-[1] bg-white px-4'>OR</span>
             </div>
 
