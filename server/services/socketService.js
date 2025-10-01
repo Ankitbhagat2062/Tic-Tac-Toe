@@ -17,18 +17,14 @@ const initializeSocket = (server) => {
     });
 
     io.on("connection", (socket) => {
-        socket.emit("welcome", "Hello from server!");
-
-        socket.on("connect", () => {
-            socket.emit("hello", "I just connected!");
-        });
 
         // Player requests a new room
-        socket.on("createRoom", (customSize) => {
+        socket.on("createRoom", (customSize, mode, user) => {
             const roomId = uuidv4().slice(0, 6); // short unique roomId
-            rooms[roomId] = { players: [], board: Array(customSize * customSize).fill(null), currentPlayer: "X" };
+            rooms[roomId] = { players: [], board: Array(customSize * customSize).fill(null), currentPlayer: "X", mode: mode , roomId : roomId, users: [], customSize: customSize };
 
             rooms[roomId].players.push(socket.id);
+            rooms[roomId].users.push(user);
             socket.join(roomId);
 
             console.log("Room created ", rooms);
@@ -36,9 +32,8 @@ const initializeSocket = (server) => {
             socket.emit("roomCreated", roomId);
             socket.emit("playerAssignment", "X"); // first player is X
         });
-
         // Join a room
-        socket.on("joinGame", (roomId) => {
+        socket.on("joinGame", (roomId, user) => {
             let room = rooms[roomId];
             if (!roomId || !rooms[roomId]) {
                 socket.emit("noRoom", "Room not found");
@@ -48,20 +43,24 @@ const initializeSocket = (server) => {
 
             console.log("Total Players", room.players.length);
 
-            //   if (room.players.length >= 2) {
-            //     socket.emit("errorMessage", "Room is full");
-            //     return;
-            //   }
-
             room.players.push(socket.id);
+            room.users.push(user);
             socket.join(roomId);
+
+            // Share mode with joining player
+            socket.emit("gameMode", room.mode , Math.sqrt(room.board.length));
 
             // Assign symbol to second player
             socket.emit("playerAssignment", "O");
 
             if (room.players.length === 2) {
-                const symbol = room.players.length === 1 ? "X" : "O";
-                socket.emit("playerAssignment", symbol);
+                // Share player info with both players
+                const playersInfo = [
+                    { id: room.players[0], symbol: "X", user: room.users[0] },
+                    { id: room.players[1], symbol: "O", user: room.users[1] }
+                ];
+                io.to(roomId).emit("playersInfo", playersInfo);
+
                 io.to(roomId).emit("updateBoard", room.board, room.currentPlayer);
 
                 io.to(roomId).emit("startGame", "Game started! Player X goes first.");
@@ -94,7 +93,7 @@ const initializeSocket = (server) => {
             if (!room) return;
             console.log("New game requested for room:", roomId);
 
-            room.board = Array(9).fill(null);
+            room.board = Array(room.customSize * room.customSize).fill(null);
             room.currentPlayer = "X";
 
             io.to(roomId).emit("updateBoard", room.board, room.currentPlayer);
@@ -102,7 +101,7 @@ const initializeSocket = (server) => {
         });
 
         // Handle a move
-        socket.on("makeMove", (roomId, index, player , winConditions) => {
+        socket.on("makeMove", (roomId, index, player, winConditions) => {
             let room = rooms[roomId];
             if (!room) return;
 
@@ -113,8 +112,7 @@ const initializeSocket = (server) => {
                 io.to(roomId).emit("updateBoard", room.board, room.currentPlayer);
 
                 console.log("Check WinnConditions", winConditions);
-                const result = checkWinner(room.board ,winConditions);
-                console.log("The Result of winner is", result);
+                const result = checkWinner(room.board, winConditions);
                 if (result) {
                     io.to(roomId).emit("gameOver", `Player ${result.winner} wins!`, result.winner, result.cells);
                 } else if (room.board.every(c => c !== null)) {

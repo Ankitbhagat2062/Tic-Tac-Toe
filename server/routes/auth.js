@@ -93,13 +93,24 @@ router.get('/success', (req, res) => {
 });
 
 // Protected Route
-router.get('/isAuthenticated', verifyToken, (req, res) => {
-  res.status(200).json({
-    message: 'This is a protected endpoint',
-    user: req.user,
-  });
+router.get('/isAuthenticated', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.status(200).json({
+      message: 'This is a protected endpoint',
+      user: {
+        userId: user._id,
+        username: user.username,
+        email: user.email,
+        profilePicture: user.profilePicture,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
-
-router.post('/fetch-user', Fetch.fetchUser)
 
 module.exports = router;
