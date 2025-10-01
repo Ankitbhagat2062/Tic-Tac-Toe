@@ -38,7 +38,7 @@ const Footer = () => {
                                 </div>
                             </a>
 
-                            <a href="#" className="bg-white text-black px-6 py-3 rounded-lg flex items-center gap-3 hover:bg-gray-100 transition-colors">
+                            <a href="#" className=" text-black px-6 py-3 rounded-lg flex items-center gap-3 hover:bg-gray-100 transition-colors">
                                 <div className="w-6 h-6 bg-red-500 rounded flex items-center justify-center">
                                     <span className="text-white text-xs font-bold">H</span>
                                 </div>

@@ -1,4 +1,10 @@
 body {
+    background: url(./images/tic-tac-toe-bg.png), linear-gradient(135deg,#667eea 0%, #764ba2 100%) ;
+    background-size: cover;
+    background-position: center center;
+    background-repeat: repeat;
+    background-attachment: fixed;
+    /* background-blend-mode: overlay; */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;

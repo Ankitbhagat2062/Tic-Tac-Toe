@@ -192,11 +192,11 @@ export const SettingsButton = () => {
           thumbColor="white"
         />
         <div className="button-group">
-          <button className="bg-[#2196F3] text-white py-4 px-7.5 m-2.5 border-2 border-[#FFD700] rounded-[25px] text-[22px] font-bold cursor-pointer transition-[background-color,shadow-[0_0_8px_rgba(255,215,0,0.7)]] duration-300 ease-in-out shadow-[0_0_8px_rgba(255,215,0,0.7)] text-shadow-[1px_1px_2px_rgba(0,0,0,0.5)] hover:bg-[#1976D2] hover:shadow-[0_0_12px_rgba(255,215,0,1)] active:bg-[#0d47a1]"
+          <button className="bg-[#2196F3] text-white py-3 px-5 m-2.5 border-2 border-[#FFD700] rounded-[25px] text-[22px] font-bold cursor-pointer transition-[background-color,shadow-[0_0_8px_rgba(255,215,0,0.7)]] duration-300 ease-in-out shadow-[0_0_8px_rgba(255,215,0,0.7)] text-shadow-[1px_1px_2px_rgba(0,0,0,0.5)] hover:bg-[#1976D2] hover:shadow-[0_0_12px_rgba(255,215,0,1)] active:bg-[#0d47a1]"
             onClick={handlePrivacyClick}>
             Privacy
           </button>
-          <button className="bg-[#2196F3] text-white py-4 px-7.5 m-2.5 border-2 border-[#FFD700] rounded-[25px] text-[22px] font-bold cursor-pointer transition-[background-color,shadow-[0_0_8px_rgba(255,215,0,0.7)]] duration-300 ease-in-out shadow-[0_0_8px_rgba(255,215,0,0.7)] text-shadow-[1px_1px_2px_rgba(0,0,0,0.5)] hover:bg-[#1976D2] hover:shadow-[0_0_12px_rgba(255,215,0,1)] active:bg-[#0d47a1]"
+          <button className="bg-[#2196F3] text-white py-3 px-5 m-2.5 border-2 border-[#FFD700] rounded-[25px] text-[22px] font-bold cursor-pointer transition-[background-color,shadow-[0_0_8px_rgba(255,215,0,0.7)]] duration-300 ease-in-out shadow-[0_0_8px_rgba(255,215,0,0.7)] text-shadow-[1px_1px_2px_rgba(0,0,0,0.5)] hover:bg-[#1976D2] hover:shadow-[0_0_12px_rgba(255,215,0,1)] active:bg-[#0d47a1]"
             onClick={handleFeedbackClick}>
             Feedback
           </button>
@@ -421,7 +421,13 @@ export const GameBoard = () => {
 
         <div id="container"></div>
         <div id="result-message"></div>
-        
+        <button onClick={ () => {
+          newGame();
+          loop("restartSound" , false);
+          play("restartSound");
+        }} className="bg-[#ff9800] text-white border-none rounded-[5px] cursor-pointer text-base mt-5 transition-colors duration-300 hover:bg-[#f57c00] px-2 py-1">
+          Reset Game
+        </button>
       </div>
     </>
   );

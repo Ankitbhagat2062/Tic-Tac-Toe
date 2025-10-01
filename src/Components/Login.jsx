@@ -13,7 +13,7 @@ function Login() {
         <header className="py-[20px] border-b-[#e5e5e5] bg-[#ffffff]">
           <div className="px-[20px] mx-auto flex-1">
             <h1 className="text-2xl no-underline hover:text-[#333333]">
-              <Link to='/home' className='font-[600] text-[#000000] m-0'> TicTacToe </Link>
+              <Link to='/' className='font-[600] text-[#000000] m-0'> TicTacToe </Link>
             </h1>
           </div>
         </header>
