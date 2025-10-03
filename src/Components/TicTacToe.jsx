@@ -13,7 +13,6 @@ function TicTacToe() {
   const playerSymbol = useOnlinePlayStore((state) => state.playerSymbol)
   const currentPlayer = useOnlinePlayStore((state) => state.currentPlayer)
   const mode = useOnlinePlayStore((state) => state.mode);
-  const opponentSymbol = useOnlinePlayStore((state) => state.opponentSymbol)
   const opponentUser = useOnlinePlayStore((state) => state.opponentUser)
   const formatTime = (t) => {
     if (typeof t === "string") return t;
@@ -50,15 +49,15 @@ function TicTacToe() {
           <div className="flex gap-1 items-start justify-between w-full px-4">
             {/* Player 1 */}
             <div className="flex flex-col items-center justify-center gap-2">
-              <Player player={player || "Player X"} symbol={playerSymbol || "X"} />
+              <Player player={player?.username || "Player X"} symbol={playerSymbol || "X"} />
               <h1 className="text-sm md:text-base lg:text-lg text-center">
                 {(playerSymbol === currentPlayer && currentPlayer) && `Your Turn ${currentPlayer}`}
               </h1>
             </div>
             {/* Player 2 */}
             <div className="flex flex-col items-center justify-center gap-2">
-              <Player player={opponentUser.username || "Player O"} symbol={opponentSymbol || "O"} />
-              {(opponentSymbol === currentPlayer && currentPlayer) && `${opponentUser.username} Turn ${opponentSymbol}`}
+              <Player player={opponentUser?.user?.username || "Player O"} symbol={opponentUser?.symbol || "O"} />
+              {(opponentUser?.symbol === currentPlayer && currentPlayer) && `${opponentUser?.user?.username} Turn ${opponentUser?.symbol}`}
             </div>
           </div>
         </div>

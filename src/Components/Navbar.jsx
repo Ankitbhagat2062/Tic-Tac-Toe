@@ -20,11 +20,6 @@ const Navbar = () => {
         dispatch(setCurrentPath(location.pathname));
     }, [location.pathname, dispatch]);
 
-    const userProfile = {
-        name: user?.username,
-        email: user?.email,
-        imageUrl: user?.profilePicture,
-    }
     const navigation = [
         { name: 'Dashboard', to: '/', current: currentPath === '/' },
         { name: 'About', to: '/about', current: currentPath === '/about' },
@@ -90,8 +85,8 @@ const Navbar = () => {
                                                 <span className="absolute -inset-1.5" />
                                                 <span className="sr-only">Open user menu</span>
                                                 <img
-                                                    alt={userProfile.name}
-                                                    src={userProfile.imageUrl}
+                                                    alt={user?.username}
+                                                    src={user?.profilePicture}
                                                     className="h-full w-full rounded-full outline-1 outline-white/10 -outline-offset-1 object-cover"
                                                 />
                                             </MenuButton>
@@ -170,14 +165,14 @@ const Navbar = () => {
                             <div className="flex items-center px-5">
                                 <div className="shrink-0 size-8">
                                     <img
-                                        alt={userProfile.name}
-                                        src={userProfile.imageUrl}
+                                        alt={user?.username}
+                                        src={user?.profilePicture}
                                         className="h-full w-full rounded-full outline-1 outline-white/10 -outline-offset-1"
                                     />
                                 </div>
                                 <div className="ml-3">
-                                    <div className="text-base/5 font-medium text-white">{userProfile.name}</div>
-                                    <div className="text-sm font-medium text-gray-400">{userProfile.email}</div>
+                                    <div className="text-base/5 font-medium text-white">{user?.username}</div>
+                                    <div className="text-sm font-medium text-gray-400">{user?.email}</div>
                                 </div>
                                 <button
                                     type="button"

@@ -6,15 +6,15 @@ import Footer from './Components/Footer';
 import { useShallow } from 'zustand/shallow';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import useAuthStore from './store/useAuthStore';
 
 function App() {
   const navigate = useNavigate();
   const { startTimer } = useOnlinePlayStore();
   const customSize = useOnlinePlayStore((state) => state.customSize);
 
-  const { setPlayer, setOpponentUser, setPlayerState, setStartPlay, setMode, setBoardState } = useOnlinePlayStore(
+  const {  setOpponentUser, setPlayerState, setStartPlay, setMode, setBoardState } = useOnlinePlayStore(
     useShallow((state) => ({
-      setPlayer: state.setPlayer,
       setOpponentUser: state.setOpponentUser,
       setPlayerState: state.setPlayerState,
       setStartPlay: state.setStartPlay,
@@ -22,18 +22,16 @@ function App() {
       setBoardState: state.setBoardState,
     })));
 
+  const { setUser } = useAuthStore();
   const handlePlayOnline = () => {
     // Navigate to online multiplayer
     navigate('/join');
   };
   const handlePlay = (username) => {
 
-    setOpponentUser({
-      username: username,
-      profilePicture: "https://lh3.googleusercontent.com/a/ACg8ocKcsVMR5kXAqIxXZyDvqymKfKOKFPhBjr3u9caGp1HmqtuGvQ=s96-c",
-    });
+    setOpponentUser({user:{ username: username, profilePicture: "",},});
     setPlayerState("offline");
-    setPlayer("Player 1")
+    setUser({username:"Player 1",})
     setMode("Classic");
     setStartPlay(true);
     setBoardState(Array(customSize * customSize).fill(null));

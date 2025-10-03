@@ -11,7 +11,6 @@ function Success() {
    if (token) {
      // Store token in localStorage
      localStorage.setItem('token', token);
-     console.log('Token stored in localStorage:', token);
      // Redirect to home after a short delay
       setTimeout(() => {
         navigate('/');

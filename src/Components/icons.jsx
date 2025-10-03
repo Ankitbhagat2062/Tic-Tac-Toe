@@ -1,11 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { useShallow } from 'zustand/shallow';
-
+// import { motion } from "framer-motion";
 
 import { TbArrowBackUp } from "react-icons/tb";
 import useOnlinePlayStore from "../store/onlinePlayStore";
 import { shadow } from "../css/colors";
+import { FaAward, FaCaretLeft, FaCaretRight, FaCheck, FaCheckCircle, FaCheckSquare, FaCoins, FaForward, FaGem, FaMapPin, FaRegCircle } from 'react-icons/fa';
+import { FiHelpCircle, FiMic } from 'react-icons/fi';
 
 export function AutoColorX({ size = 48, className = "" }) {
   return (
@@ -107,6 +109,254 @@ export const ToggleSwitch = ({ label, checked, onToggle, onColor, offColor, thum
     </div>
   );
 };
+export const VoiceIcon = () => {
+  return (
+    <span className="absolute -top-4 -right-3">
+      <div className="relative inline-flex items-center justify-center">
+        {/* Bubble */}
+        <div className="relative bg-blue-900 border-4 border-green-500 rounded-full w-8 h-8 flex items-center justify-center">
+          <FiMic className="text-green-500 text-xl z-1" />
+
+          {/* Top tail */}
+          <div className="absolute -top-1.5 left-2 rotate-75 w-4.5 h-4.5 bg-blue-900 border-l-4 border-t-4 border-green-500"></div>
+          {/* Bottom tail */}
+          <div className="absolute top-3 -left-[3px] -rotate-15 w-4.5 h-4.5 bg-blue-900 border-l-4 border-b-4 border-green-500"></div>
+        </div>
+      </div>
+    </span>
+  )
+}
+
+import { tailwind500, colors, Icons } from "../css/colors";
+import { IoIosLock } from 'react-icons/io';
+export const SelectIcon = () => {
+  const { selectedIcon, selectedColor, currentIndex, setSelectedIcon, setSelectedColor, setCurrentIndex, } = useOnlinePlayStore();
+  const selectColor = (color) => {
+    setSelectedColor(color);
+  };
+  const handleLeft = () => {
+    setCurrentIndex(prev => Math.max(0, prev - 1));
+  };
+
+  const handleRight = () => {
+    setCurrentIndex(prev => Math.min(Icons.length - 4, prev + 1));
+  };
+  return (
+    <>
+      <div className="w-full max-w-md mb-3 border-yellow-300 bg-blue-600 pb-2">
+        <h2 className="text-xl font-bold mb-4 text-center text-yellow-400">Select Token / Icon</h2>
+        <div className="flex justify-around flex-col gap-2.5 mx-2.5">
+          <div className="w-full flex items-center justify-center">
+            <button
+              onClick={handleLeft}
+              className={`flex-shrink-0 mr-4 p-2 ${currentIndex === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={currentIndex === 0}
+            >
+              <FaCaretLeft className='text-yellow-300 h-8' />
+            </button>
+            <div className="overflow-hidden w-64 flex-shrink-0">
+              <div
+                className="flex gap-4 transition-transform duration-500 ease-in-out"
+                style={{ transform: `translateX(${-currentIndex * 64}px)` }}
+              >
+                {Icons.map((icon) => (
+                  <button
+                    key={icon.id}
+                    onClick={() => setSelectedIcon(icon)}
+                    className={`relative rounded-full flex items-center justify-center border-4 transition w-12 h-12 flex-shrink-0
+                            ${selectedColor ? `${selectedColor.bg} ${selectedColor.border}` : `bg-gray-600 border-gray-500 hover:scale-105 shadow-lg scale-110`}
+                            ${icon.isLocked ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    style={{ "--bg-color-number": tailwind500[selectedColor?.bg] || "#6b7280" }}
+                    disabled={icon.isLocked}
+                  >
+                    <icon.icon className={`h-8 w-8 rounded-full ${selectedIcon.id === icon.id ? `border-yellow-300 border-2 p-1` : 'border-none'}`} />
+                    {(selectedIcon.id === icon.id && !icon.isLocked) && <FaCheckSquare className='absolute top-0 left-0 bg-yellow-300 text-blue-600' />}
+                    {icon.isLocked && <IoIosLock className="absolute -top-1 -right-1 text-sm text-yellow-400" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={handleRight}
+              className={`flex-shrink-0 ml-4 p-2 ${currentIndex === Icons.length - 4 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={currentIndex === Icons.length - 4}
+            >
+              <FaCaretRight className='text-yellow-300 h-8' />
+            </button>
+          </div>
+          <div className="w-full bg-white h-1"></div>
+          <div className="colors flex justify-center items-center gap-4 transition-transform duration-500 ease-in-out">
+            {colors.map((color) => (
+              <button
+                key={color.id}
+                onClick={() => selectColor(color)}
+                className={`w-12 h-12 rounded-full flex items-center justify-center border-4 transition flex-shrink-0 ${color.bg} 
+                        ${selectedColor.id === color.id && `outline-2 outline-white`} ${color.border} shadow-lg scale-110`}
+              >
+                {selectedColor.id === color.id && <FaCheck />}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+export const SelectGame = () => {
+  const { selectedGame, setSelectedGame, setMode } = useOnlinePlayStore();
+  return (
+    <>
+      <div className="w-full max-w-md mb-3 px-2 bg-blue-800 py-4 border-2 border-yellow-300">
+        <h2 className="text-xl font-bold mb-4 text-center text-yellow-500 flex items-center justify-center gap-2">
+          Select Game
+          <FiHelpCircle className="text-yellow-400" />
+        </h2>
+        <div className="flex justify-around">
+          {['Classic', 'popular', 'Custom'].map((game) => (
+            <button
+              key={game}
+              onClick={() => {
+                setSelectedGame(game);
+                setMode(game);
+              }}
+              className={`relative p-3 rounded-lg transition-all duration-300 ${selectedGame === game
+                ? 'bg-blue-700 shadow-lg scale-105 border-2 border-yellow-300'
+                : 'bg-gray-700 hover:bg-gray-600 border-2 border-white/50'
+                }`}
+            >
+              <div className="flex items-center justify-center mb-1">
+                {selectedGame === game ? (
+                  <FaCheckCircle className="text-yellow-400 text-lg" />
+                ) : (
+                  <FaRegCircle className="text-white text-lg" />
+                )}
+              </div>
+              <div className="text-center text-sm font-bold text-white capitalize">
+                {game}
+              </div>
+              {game === 'Classic' && (
+                <FaMapPin className={`absolute -top-1 -left-1 text-yellow-400 text-sm ${selectedGame === game ? 'text-white' : ''}`} />
+              )}
+              {game === 'popular' && (
+                <FaAward className={`absolute -top-1 -right-1 text-yellow-400 text-sm ${selectedGame === game ? 'text-white' : ''}`} />
+              )}
+              {game === 'Custom' && (
+                <FaForward className={`absolute -top-1 -right-1 text-yellow-400 text-sm ${selectedGame === game ? 'text-white' : ''}`} />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
+  )
+}
+
+import { useState } from "react";
+import { motion } from "framer-motion";
+
+// ✅ Opponent chooser with animation + auto room creation/join
+export const SearchUser = ({ user, onlineUser, createRoom, roomId }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showName, setShowName] = useState(false); // controls username display
+  const { setStartPlay } = useOnlinePlayStore();
+
+  useEffect(() => {
+    if (!onlineUser.length) toast('No user connected');
+    if (!onlineUser.length) return;
+
+    // Cycle through users every 1s
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % onlineUser.length);
+      setShowName(false); // hide name until animation finishes
+    }, 1000);
+
+    // After one full cycle → pick a random opponent
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+      const randomUser =
+        onlineUser[Math.floor(Math.random() * onlineUser.length)];
+      setSelectedUser(randomUser);
+    }, 1000 * onlineUser.length);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [onlineUser]);
+
+  const currentOpponent = selectedUser || onlineUser[currentIndex];
+  const nextOpponent = onlineUser[(currentIndex + 1) % onlineUser.length] || currentOpponent;
+
+  // ✅ Called when animation of "nextOpponent" finishes
+  // Animation end handler
+  const handleAnimationEnd = () => {
+    if(!onlineUser.length) return;
+    setShowName(true);
+    setStartPlay(true);
+    if (!roomId) {
+      // If room not created yet → create one
+      createRoom("online",user,nextOpponent)
+    } else {
+      // If room already created → join it
+      // joinRoom(roomId , user);
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between w-full mt-6">
+      {/* Current User */}
+      <div className="flex flex-col items-center">
+        <img
+          src={user?.profilePicture}
+          alt="Profile"
+          className="w-24 h-24 rounded-sm border-4 border-red-500 object-cover"
+        />
+        <span className="text-white font-bold mt-2 text-center">
+          {user?.username || "Player 1"}
+        </span>
+      </div>
+
+      {/* VS */}
+      <span className="text-green-500 text-3xl font-bold mx-4 animate-pulse">
+        VS
+      </span>
+
+      {/* Opponent */}
+      <div className="flex flex-col items-center">
+        <div className="relative flex items-center justify-center flex-col w-28 h-28 overflow-hidden">
+          {/* Current image sliding out */}
+          <img
+            key={`current-${currentIndex}`}
+            src={currentOpponent?.profilePicture || "/images/player.png"}
+            alt="Opponent"
+            className="absolute w-24 h-24 rounded-sm border-4 border-red-500 object-cover animate-[slideOut_1s_ease-in-out_forwards]"
+          />
+
+          {/* Next image sliding in */}
+          <img
+            key={`next-${currentIndex}`}
+            src={nextOpponent?.profilePicture || "/images/player.png"}
+            alt="Next Opponent"
+            className="absolute w-24 h-24 rounded-sm border-4 border-red-500 object-cover animate-[slideIn_1s_ease-in-out_forwards]"
+            onAnimationEnd={handleAnimationEnd} // ✅ triggers when animation ends
+          />
+        </div>
+
+        {/* Opponent name only after animation ends */}
+        {showName ? (
+          <motion.div>
+            {nextOpponent?.username || "???"}
+          </motion.div>
+        ):(
+          <p>{nextOpponent?.profilePicture ? 'Searching...' : "No User Found"}</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
 
 export const SettingsButton = () => {
   const { setIsPlaying, setMusicOn, setShowSetting } = useOnlinePlayStore();
@@ -158,15 +408,14 @@ export const SettingsButton = () => {
   };
 
   const handlePrivacyClick = () => {
-    alert('Privacy settings clicked!');
+    toast('Privacy settings clicked!');
     // Implement navigation or modal for privacy settings
   };
 
   const handleFeedbackClick = () => {
-    alert('Feedback button clicked!');
+    toast('Feedback button clicked!');
     // Implement navigation or modal for feedback
   };
-  console.log("musicOn is :", musicOn)
   return (
     <div className="bg-[#000000de] z-101 min-h-screen text-white font-sans 
     absolute top-1 flex flex-col items-center justify-center px-4 w-full overflow-hidden gap-5">
@@ -210,6 +459,21 @@ export const SettingsButton = () => {
     </div>
   );
 };
+
+export const TotalCash = ({ totalCoins, diamonds }) => {
+  return (
+    <div className="flex justify-between w-full max-w-md mb-4 pt-4">
+      <div className="flex items-center justify-center rounded-lg px-3">
+        <FaCoins className="text-yellow-400" />
+        <span>{totalCoins}</span>
+      </div>
+      <div className="text-center flex flex-col gap-2">
+        <div className="text-lg font-bold flex justify-center items-center"><FaGem className="text-purple-400" />{diamonds}</div>
+        <span className="text-sm bg-blue-800 rounded-lg px-3 py-1 border-2 border-amber-400">Game History</span>
+      </div>
+    </div>
+  )
+}
 
 export const GameBoard = () => {
 
@@ -259,14 +523,12 @@ export const GameBoard = () => {
   const totalGameWonRef = useRef(null);
   const boardElRef = useRef(null);
   const lineRef = useRef(null);
-  const msgRef = useRef(null);
   const playerSymbolRef = useRef(playerSymbol);
 
   const setRef = useOnlinePlayStore((s) => s.setRef);
   const { newGame, boardElClick, handleRoundOver, checkDraw, checkWinner, generateWinningPatterns, aiMove } = useOnlinePlayStore();
 
   useEffect(() => {
-    setRef("msg", msgRef.current);
     setRef("board", boardElRef.current);
     setRef("overlay", overlayRef.current);
     setRef("totalGameWon", totalGameWonRef.current);
@@ -308,7 +570,7 @@ export const GameBoard = () => {
     }
     // ---------- OFFLINE: HUMAN vs AI ----------
     if (playerState === 'offline') {
-      if (opponentUser.username === 'AI') {
+      if (opponentUser?.user?.username === 'AI') {
         aiMove(index);
       }
       // ---------- OFFLINE: HUMAN vs HUMAN (local) ---------- {
@@ -324,7 +586,7 @@ export const GameBoard = () => {
         newBoard[index] = symbol;
         setBoardState(newBoard);
         setPlayerSymbol("X");
-        play("cellClickSound");
+        play("cellclickSound");
         (playerSymbol === currentPlayer && currentPlayer) && setStatus(`It's Player ${currentPlayer}'s turn!`);
         // check win/draw
         const winner = checkWinner(newBoard, customSize, customSize, customWin);
@@ -373,12 +635,6 @@ export const GameBoard = () => {
       <div className="text-black flex flex-col justify-center items-center gap-2.5 p-2.5 font-sans">
         <div className="flex flex-col justify-center items-center gap-5 relative">
           <div className="flex flex-col items-center justify-center gap-2.5">
-            {playerState === 'online' && (
-              <div className="mb-5 flex justify-center items-center">
-                < h2 className='text-[#666] text-sm mb-2.5' ref={msgRef}></h2>
-              </div>
-            )}
-
             <div className="flex relative flex-col justify-center items-center">
               <div className="text-lg font-bold text-[#333] mb-5 min-h-[24px]">{status}</div>
               <div ref={boardElRef} onClick={boardElClick} className={`grid gap-2.5 p-[10px] rounded-md relative bg-blue-600`}
@@ -393,7 +649,7 @@ export const GameBoard = () => {
           </div>
 
         </div>
-        <div ref={overlayRef} 
+        <div ref={overlayRef}
           className={`board-overlay cursor-pointer absolute top-0 left-0 w-full h-full bg-[#000000bf] text-white text-2xl font-bold 
               flex justify-center items-center rounded-lg 
               transition-opacity duration-400 ease-in-out z-50
@@ -421,9 +677,9 @@ export const GameBoard = () => {
 
         <div id="container"></div>
         <div id="result-message"></div>
-        <button onClick={ () => {
+        <button onClick={() => {
           newGame();
-          loop("restartSound" , false);
+          loop("restartSound", false);
           play("restartSound");
         }} className="bg-[#ff9800] text-white border-none rounded-[5px] cursor-pointer text-base mt-5 transition-colors duration-300 hover:bg-[#f57c00] px-2 py-1">
           Reset Game
