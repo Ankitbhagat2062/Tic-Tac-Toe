@@ -3,6 +3,10 @@ const { Server } = require("socket.io");
 
 // keep track of game rooms
 let rooms = {};
+// keep track of online users (keyed by username for uniqueness)
+let onlineUsers = {};
+// map socket.id to username
+let socketToUser = {};
 const { v4: uuidv4 } = require("uuid");
 
 const initializeSocket = (server) => {
@@ -17,21 +21,43 @@ const initializeSocket = (server) => {
     });
 
     io.on("connection", (socket) => {
+        // User connected
+        socket.on("user_connected", (user) => {
+            if (user && user.username) {
+                onlineUsers[user.username] = user;
+                socketToUser[socket.id] = user.username;
+                io.emit("onlineUsers", Object.values(onlineUsers), "");
+            }
+        });
+
+        // Get online users
+        socket.on("getOnlineUsers", (roomId) => {
+            socket.emit("onlineUsers", Object.values(onlineUsers), roomId);
+        });
+
+        // RoomId sharing between two matched players
+        socket.on("roomIdShared", (roomId, opponentUsername) => {
+            const opponentSocketId = Object.keys(socketToUser)
+                .find(key => socketToUser[key] === opponentUsername);
+
+            if (opponentSocketId) {
+                io.to(opponentSocketId).emit("roomIdReceived", roomId);
+            }
+            console.log("RoomId shared", roomId ,opponentUsername)
+        });
 
         // Player requests a new room
         socket.on("createRoom", (customSize, mode, user) => {
             const roomId = uuidv4().slice(0, 6); // short unique roomId
-            rooms[roomId] = { players: [], board: Array(customSize * customSize).fill(null), currentPlayer: "X", mode: mode , roomId : roomId, users: [], customSize: customSize };
+            rooms[roomId] = { players: [], board: Array(customSize * customSize).fill(null), currentPlayer: "X", mode: mode, roomId: roomId, users: [], customSize: customSize };
 
             rooms[roomId].players.push(socket.id);
             rooms[roomId].users.push(user);
             socket.join(roomId);
-
-            console.log("Room created ", rooms);
-
             socket.emit("roomCreated", roomId);
-            socket.emit("playerAssignment", "X"); // first player is X
+            console.log("RoomId Created", roomId , user);
         });
+
         // Join a room
         socket.on("joinGame", (roomId, user) => {
             let room = rooms[roomId];
@@ -39,25 +65,16 @@ const initializeSocket = (server) => {
                 socket.emit("noRoom", "Room not found");
                 return;
             }
-            console.log("Room Joined", roomId);
-
-            console.log("Total Players", room.players.length);
-
             room.players.push(socket.id);
             room.users.push(user);
             socket.join(roomId);
 
-            // Share mode with joining player
-            socket.emit("gameMode", room.mode , Math.sqrt(room.board.length));
-
             // Assign symbol to second player
-            socket.emit("playerAssignment", "O");
-
             if (room.players.length === 2) {
                 // Share player info with both players
                 const playersInfo = [
-                    { id: room.players[0], symbol: "X", user: room.users[0] },
-                    { id: room.players[1], symbol: "O", user: room.users[1] }
+                    { id: room.players[0], symbol: "X", user: room.users[0], roomId: roomId, mode: room.mode, customSize: Math.sqrt(room.board.length) },
+                    { id: room.players[1], symbol: "O", user: room.users[1], roomId: roomId, mode: room.mode, customSize: Math.sqrt(room.board.length) }
                 ];
                 io.to(roomId).emit("playersInfo", playersInfo);
 
@@ -67,10 +84,19 @@ const initializeSocket = (server) => {
             } else {
                 socket.emit("roomFull");
             }
+            console.log("RoomId Joined", roomId , user);
         });
 
         socket.on("disconnect", () => {
             console.log("User disconnected:", socket.id);
+
+            // Remove from online users
+            const username = socketToUser[socket.id];
+            if (username) {
+                delete onlineUsers[username];
+                delete socketToUser[socket.id];
+                io.emit("onlineUsers", Object.values(onlineUsers));
+            }
 
             for (let roomId in rooms) {
                 if (rooms[roomId].players.includes(socket.id)) {
@@ -91,7 +117,6 @@ const initializeSocket = (server) => {
         socket.on("newGame", (roomId) => {
             const room = rooms[roomId];
             if (!room) return;
-            console.log("New game requested for room:", roomId);
 
             room.board = Array(room.customSize * room.customSize).fill(null);
             room.currentPlayer = "X";
@@ -111,7 +136,6 @@ const initializeSocket = (server) => {
 
                 io.to(roomId).emit("updateBoard", room.board, room.currentPlayer);
 
-                console.log("Check WinnConditions", winConditions);
                 const result = checkWinner(room.board, winConditions);
                 if (result) {
                     io.to(roomId).emit("gameOver", `Player ${result.winner} wins!`, result.winner, result.cells);
