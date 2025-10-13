@@ -50,7 +50,6 @@ const GameBoard = () => {
     const boardElRef = useRef(null);
     const lineRef = useRef(null);
 
-
     useEffect(() => {
         setRef("board", boardElRef.current);
         setRef("overlay", overlayRef.current);
@@ -62,7 +61,7 @@ const GameBoard = () => {
         const winConditions = generateWinningPatterns(customSize, customSize, customWin);
         // If it's the very first turn, only Player X can play
         if (playerState === 'online') {
-            if (boardState.every(c => c === null) && player?.symbol?.id !== currentPlayer) {
+            if (boardState.every(c => c === null) && player?.user?.username !== currentPlayer) {
                 loop("wrongClickSound", false);  // set background music to loop
                 play("wrongClickSound");
                 toast.error("Player who created Room goes first!");
@@ -71,14 +70,14 @@ const GameBoard = () => {
             }
 
             // If it's not this player's turn
-            if (player?.symbol.id !== currentPlayer) {
+            if (player?.user?.username !== currentPlayer) {
                 play("wrongClickSound");
                 toast.error(`It's Player ${currentPlayer}'s turn!`);
                 setStatus(`It's Player ${currentPlayer}'s turn!`);
                 return;
             }
             // Only emit move if cell is empty and it is your turn
-            if (boardState[index] === null && player?.symbol.id === currentPlayer) {
+            if (boardState[index] === null && player?.user?.username === currentPlayer) {
                 loop("cellclickSound", false)
                 play("cellclickSound");
                 socket.emit("makeMove", roomId, index, player, winConditions);
@@ -100,13 +99,14 @@ const GameBoard = () => {
                 }
 
                 // Find the correct symbol to place
-                const Symbol = currentPlayer || player.symbol.id
+                const Symbol = currentPlayer || player.user.username
                 newBoard[index] = Symbol;
                 setBoardState(newBoard);
                 play("cellclickSound");
                 // Check win/draw
                 const result = checkWinner(newBoard, customSize, customSize, customWin);
                 if (result?.winner) {
+                    console.log("Winner:", result.winner , result.cells);
                     handleRoundOver(`Player ${result?.winner} wins!`, result?.winner, result?.cells);
                     return;
                 }
@@ -117,8 +117,8 @@ const GameBoard = () => {
                 }
 
                 // Switch turn
-                setCurrentPlayer(Symbol === player.symbol.id ? opponentUser.symbol.id : player.symbol.id);
-                setStatus(`It's ${currentPlayer === player.symbol.id ? "Opponent" : "Your"} turn!`);
+                setCurrentPlayer(Symbol === player.user.username ? opponentUser.user.username : player.user.username);
+                setStatus(`It's ${currentPlayer === player.user.username ? "Opponent" : "Your"} turn!`);
             }
         }
     };
@@ -130,11 +130,31 @@ const GameBoard = () => {
         }, 500);
     }, [newGame, showWinLine])
 
-
     const renderBoard = () => {
         return boardState.map((value, index) => {
-            const icon = value ? Icons.find((i) => i.id === value) : null;
-            const color = value === player?.symbol?.id ? player?.symbol?.color : opponentUser?.symbol?.color;
+            if (player.symbol === null || opponentUser.symbol === null) return null;
+
+            let icon = null, color = null;
+
+            // Only render icon if cell is not empty
+            if (value !== null) {
+                if (player?.symbol?.id === opponentUser?.symbol?.id) {
+                    icon = value === player?.user?.username
+                        ? Icons.find((i) => i.id === player?.symbol?.id)
+                        : Icons.find((i) => i.id === '0');
+                    color = value === player?.user?.username
+                        ? player?.symbol?.color
+                        : { id: 'blue', bg: 'bg-blue-500', border: 'border-blue-400' };
+                } else {
+                    icon = value === player?.user?.username
+                        ? Icons.find((i) => i.id === player?.symbol?.id)
+                        : Icons.find((i) => i.id === opponentUser?.symbol?.id);
+                    color = value === player?.user?.username
+                        ? player?.symbol?.color
+                        : opponentUser?.symbol?.color;
+                }
+            }
+
             return (
                 <div
                     key={index}

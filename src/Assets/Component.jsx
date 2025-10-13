@@ -299,22 +299,30 @@ export const SelectIcon = () => {
 
 import { FaDice } from 'react-icons/fa';
 
-export const SelectName = ({handleStartGame}) => {
+export const SelectName = ({ handleStartGame }) => {
     const { setOpponentUser, setPlayer } = useOnlinePlayStore();
+    const [selectedIndex, setSelectedIndex] = useState(0);
+    useEffect(() => {
+        // Automatically set player and opponentUser if user did not change any username
+        if (players[selectedIndex]) {
+            setPlayer(players[selectedIndex].player);
+            setOpponentUser(players[selectedIndex].opponent);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedIndex]);
     // Example player data, replace with your store logic
     const [players, setPlayers] = useState([
         {
-            player: { user: { username: 'Player 1' }, symbol: {id:Icons[0].id , icon: Icons[0].icon, color: colors[0] } },
-            opponent: { user: { username: 'Player 2' }, symbol: { id:Icons[1].id ,icon: Icons[1].icon, color: colors[1] } },
+            player: { user: { username: 'Player 1' }, symbol: { id: Icons[0].id, icon: Icons[0].icon, color: colors[0] } },
+            opponent: { user: { username: 'Player 2' }, symbol: { id: Icons[1].id, icon: Icons[1].icon, color: colors[1] } },
             selected: false
         },
         {
-            player: { user: { username: 'Player 1' }, symbol: { id:Icons[0].id ,icon: Icons[0].icon, color: colors[2] } },
-            opponent: { user: { username: 'Player 2' }, symbol: {id:Icons[1].id , icon: Icons[1].icon, color: colors[3] } },
+            player: { user: { username: 'Player 1' }, symbol: { id: Icons[0].id, icon: Icons[0].icon, color: colors[2] } },
+            opponent: { user: { username: 'Player 2' }, symbol: { id: Icons[1].id, icon: Icons[1].icon, color: colors[3] } },
             selected: false
         },
     ]);
-    const [selectedIndex, setSelectedIndex] = useState(0);
 
     const handleSelect = (idx) => {
         setSelectedIndex(idx);

@@ -444,12 +444,12 @@ const useOnlinePlayStore = create((set, get) => {
             if (winner === null) {
                 get().play("drawMusic");
                 toast.info("It is a Draw");
-            } else if (player?.symbol.id === winner) {
+            } else if (player?.user?.username === winner) {
                 get().play("winMusic");
                 get().addCoins(900);
                 get().addScore(1);
                 toast.success("You have won");
-            } else if (player?.symbol.id !== winner && winner) {
+            } else if (player?.user?.username !== winner && winner) {
                 get().play("loseMusic");
                 toast.error("You have lost");
             }
@@ -497,8 +497,8 @@ const useOnlinePlayStore = create((set, get) => {
             } = get();
 
             // Both player and AI symbols (JSX)
-            const humanSymbol = player?.symbol?.id;
-            const aiSymbol = opponentUser?.symbol?.id;
+            const humanSymbol = player?.user?.username;
+            const aiSymbol = opponentUser?.user?.username;
 
             const newBoard = [...boardState];
             // 🧱 Prevent overwriting filled cells
@@ -527,7 +527,7 @@ const useOnlinePlayStore = create((set, get) => {
             }
 
             // 🧠 Switch to AI turn
-            setCurrentPlayer(opponentUser?.symbol?.id);
+            setCurrentPlayer(opponentUser?.user?.username);
             setStatus("AI is thinking...");
 
             // ⏱ Simulate AI delay (0.5s)
@@ -560,7 +560,7 @@ const useOnlinePlayStore = create((set, get) => {
                 }
 
                 // 🔁 Switch back to human turn
-                setCurrentPlayer(player?.symbol?.id);
+                setCurrentPlayer(player?.user?.username);
                 setStatus("Your turn!");
             }, 500);
         },

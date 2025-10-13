@@ -35,7 +35,7 @@ const Home = () => {
   const selectedIcon = useOnlinePlayStore((state) => state.selectedIcon)
   const selectedColor = useOnlinePlayStore((state) => state.selectedColor)
   const { startTimer, showSetting, setShowSetting, setEntryAmount, entryAmount, step, setStep } = useOnlinePlayStore();
-  const { setIsPlayingWith, setPlayer, setOpponentUser, setStartPlay, setPlayerState, setSelectedPlayers, setBoardState } = useOnlinePlayStore(
+  const { setIsPlayingWith, setPlayer, setOpponentUser, setStartPlay, setPlayerState, setSelectedPlayers, setBoardState , setCurrentPlayer} = useOnlinePlayStore(
     useShallow((state) => ({
       setIsPlayingWith: state.setIsPlayingWith,
       setPlayer: state.setPlayer,
@@ -44,9 +44,9 @@ const Home = () => {
       setPlayerState: state.setPlayerState,
       setSelectedPlayers: state.setSelectedPlayers,
       setBoardState: state.setBoardState,
+      setCurrentPlayer: state.setCurrentPlayer,
     })));
 
-  // const { timer } = useOnlinePlayStore();
   useEffect(() => {
     fetchUser();
   }, [fetchUser]);
@@ -73,6 +73,7 @@ const Home = () => {
 
   const handleStartGame = () => {
     if (!startPlay) {
+      setCurrentPlayer(player.user.username);
       setStartPlay(true);
       setBoardState(Array(customSize * customSize).fill(null));
       startTimer();
@@ -81,10 +82,6 @@ const Home = () => {
   useEffect(() => {
     if (isPlayingWith === 'randomUser' && step === 2) socket.emit("user_connected", user);
   }, [socket, user, isPlayingWith, step]);
-
-  useEffect(() => {
-    console.log(player, opponentUser)
-  }, [opponentUser, player])
 
   console.assert(motion)
   return (
@@ -214,9 +211,7 @@ const Home = () => {
               whileHover={{ scale: 1.05 }}
               onClick={() => {
                 setPlayerState("offline");
-                setOpponentUser({ user: { username: "Player 2" }, symbol: { id: '0', color: {id:'green',bg:'bg-green-500',border:'border-green-500'} } });
                 setIsPlayingWith('Human');
-                setPlayer({ user: { username: "Player 1" }, symbol: { id: selectedIcon?.id, color: selectedColor} });
               }}
             >
               <div className={`relative p-1 border-4 border-[#6e63c4]  w-64 h-auto bg-yellow-500 rounded-2xl shadow-lg ${shadow}`}>
