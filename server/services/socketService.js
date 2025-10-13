@@ -50,7 +50,7 @@ const initializeSocket = (server) => {
         // Player requests a new room
         socket.on("createRoom", (customSize, mode, player) => {
             const roomId = uuidv4().slice(0, 6); // short unique roomId
-            rooms[roomId] = { players: [], board: Array(customSize * customSize).fill(null), currentPlayer: "X", mode: mode, roomId: roomId, users: [], customSize: customSize };
+            rooms[roomId] = { players: [], board: Array(customSize * customSize).fill(null), currentPlayer: player?.user?.username, mode: mode, roomId: roomId, users: [], customSize: customSize };
 
             rooms[roomId].players.push(socket.id);
             rooms[roomId].users.push(player);
@@ -75,7 +75,7 @@ const initializeSocket = (server) => {
             room.players.push(socket.id);
             room.users.push(player);
             socket.join(roomId);
-            room.currentPlayer = player?.symbol.id
+            room.currentPlayer = player?.user?.username;
             if (room.players.length === 2) {
                 // Share player info with both players
                 const playersInfo = [
@@ -125,7 +125,7 @@ const initializeSocket = (server) => {
             if (!room) return;
 
             room.board = Array(room.customSize * room.customSize).fill(null);
-            room.currentPlayer = "X";
+            room.currentPlayer = room.users[0]?.user?.username; // reset to player 1
 
             io.to(roomId).emit("updateBoard", room.board, room.currentPlayer);
             io.to(roomId).emit("startGame", "New game started! Player X goes first.");
@@ -135,13 +135,12 @@ const initializeSocket = (server) => {
             if (!room) return;
             const Symbol = room.currentPlayer
             // Find opponent socket id from room.players array
-            const opponent = room.users.find(p => p?.symbol?.id !== player?.symbol?.id) || '0'
-            if (room.board[index] === null && player?.symbol?.id === room.currentPlayer) {
+            const opponent = room.users.find(p => p?.user?.username !== player?.user?.username) || '0'
+            if (room.board[index] === null && player?.user?.username === room.currentPlayer) {
                 room.board[index] = Symbol;
 
-                room.currentPlayer = Symbol === player?.symbol.id ? opponent?.symbol?.id || opponent : player?.symbol?.id;
+                room.currentPlayer = Symbol === player?.user?.username ? opponent?.user?.username || opponent : player?.user?.username;
                 io.to(roomId).emit("updateBoard", room.board, room.currentPlayer);
-
                 const result = checkWinner(room.board, winConditions);
                 if (result) {
                     io.to(roomId).emit("gameOver", `Player ${result.winner} wins!`, result.winner, result.cells);
