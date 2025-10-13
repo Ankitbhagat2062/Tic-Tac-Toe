@@ -1,19 +1,18 @@
-import { ToastContainer, } from 'react-toastify';
-
-
 import useOnlinePlayStore from "../store/onlinePlayStore";
-import { GameBoard, Player, SettingsButton } from './icons';
-import { shadow } from '../css/colors';
+import { Player, SettingsButton } from '../Assets/Component';
+import { shadow } from '../Assets/colors';
+import GameBoard from "./GameBoard";
 
 function TicTacToe() {
   const { timer } = useOnlinePlayStore();
   const player = useOnlinePlayStore((state) => state.player)
   const showSetting = useOnlinePlayStore((state) => state.showSetting)
   const setShowSetting = useOnlinePlayStore((state) => state.setShowSetting)
-  const playerSymbol = useOnlinePlayStore((state) => state.playerSymbol)
   const currentPlayer = useOnlinePlayStore((state) => state.currentPlayer)
   const mode = useOnlinePlayStore((state) => state.mode);
   const opponentUser = useOnlinePlayStore((state) => state.opponentUser)
+  const selectedIcon = useOnlinePlayStore((state) => state.selectedIcon)
+  const selectedColor = useOnlinePlayStore((state) => state.selectedColor)
   const formatTime = (t) => {
     if (typeof t === "string") return t;
     const minutes = Math.floor(t / 60).toString().padStart(2, "0");
@@ -22,7 +21,6 @@ function TicTacToe() {
   };
   return (
     <>
-      <ToastContainer />
       {/* Main Content */}
       <div className="flex flex-col items-center justify-center w-full h-full md:gap- mt-10">
         <h1>{mode} Game Started</h1>
@@ -40,7 +38,7 @@ function TicTacToe() {
 
         {/* Layout wrapper */}
         <div className="flex flex-col items-center justify-center w-full h-full md:gap-6">
-          {/* Game Boar  */}
+          {/* Game Board  */}
           <div className="flex items-center justify-center">
             <div className="w-full aspect-square max-w-[400px]">
               <GameBoard />
@@ -49,15 +47,15 @@ function TicTacToe() {
           <div className="flex gap-1 items-start justify-between w-full px-4">
             {/* Player 1 */}
             <div className="flex flex-col items-center justify-center gap-2">
-              <Player player={player?.username || "Player X"} symbol={playerSymbol || "X"} />
+              <Player player={player} color={selectedColor} />
               <h1 className="text-sm md:text-base lg:text-lg text-center">
-                {(playerSymbol === currentPlayer && currentPlayer) && `Your Turn ${currentPlayer}`}
+                {(selectedIcon.id === currentPlayer && currentPlayer) && `Your Turn ${currentPlayer}`}
               </h1>
             </div>
             {/* Player 2 */}
             <div className="flex flex-col items-center justify-center gap-2">
-              <Player player={opponentUser?.user?.username || "Player O"} symbol={opponentUser?.symbol || "O"} />
-              {(opponentUser?.symbol === currentPlayer && currentPlayer) && `${opponentUser?.user?.username} Turn ${opponentUser?.symbol}`}
+              <Player player={opponentUser} color={opponentUser?.symbol?.color} />
+              {(opponentUser?.symbol.id === currentPlayer && currentPlayer) && `${opponentUser?.user?.username} Turn ${opponentUser?.symbol.id}`}
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import React from 'react'
 import { FaFacebookF, FaInstagram, FaYoutube, } from 'react-icons/fa';
-import { GooglePlayIcon } from "./icons";
+import { GooglePlayIcon } from "../Assets/react-icons";
 
 const Footer = () => {
     return (

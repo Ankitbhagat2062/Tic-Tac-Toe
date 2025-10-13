@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react'
-import '../App.css'
 import { Link, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { CgLogIn } from "react-icons/cg";
-import { setCurrentPath } from '../store/navigationSlice';
 
+import '../App.css'
 import useApp from '../hooks/useApp';
 import useAuthStore from "../store/useAuthStore";
+import { setCurrentPath } from '../store/navigationSlice';
 
 const Navbar = () => {
     const { token, logout } = useApp();

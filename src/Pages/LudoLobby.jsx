@@ -1,46 +1,48 @@
-import React, { useCallback, useState } from 'react';
-import { FaCheck, FaCoins, FaMinus, FaPlus, FaCheckCircle, FaRegCircle, FaMapPin, FaForward, FaAward, FaShareAlt, FaWhatsapp } from 'react-icons/fa'; // For coins and diamonds (FaGem as alternative to GiDiamond if needed)
+import React, { useCallback, useEffect, useState } from 'react';
+import { FaCheck, FaCheckCircle, FaShareAlt, FaWhatsapp, FaCaretLeft, FaCaretRight } from 'react-icons/fa'; // For coins and diamonds (FaGem as alternative to GiDiamond if needed)
 import { FiHelpCircle, FiShare2, FiGift } from 'react-icons/fi';
-import { TbArrowBackUp } from "react-icons/tb";
+import { IoIosLock } from 'react-icons/io';
 import { toast } from 'react-toastify'
 
 import '../App.css';
-import { shadow } from "../css/colors";
+// import { shadow } from "../Assets/colors";
 import useAuthStore from "../store/useAuthStore";
 import useOnlinePlayStore from "../store/onlinePlayStore";
-import Loader from '../Assets/Loader';
-import { SelectGame, SelectIcon, TotalCash, VoiceIcon } from './icons';
+import { EntryFee, SelectGame, SelectIcon, SelectPlayers, TotalCash, } from '../Assets/Component';
+import { VoiceIcon } from '../Assets/react-icons';
+import { board, shadow } from '../Assets/colors';
+
 const LudoLobby = () => {
   const [isRoomCreated, setIsRoomCreated] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const {
-    numPlayers,
     voiceChat,
     entryAmount,
-    totalCoins,
-    diamonds,
     dailyFree,
     step,
     selectedGame,
 
-    setNumPlayers,
     setRoomId,
     setVoiceChat,
     setEntryAmount,
     setStep,
     spendCoins,
     setCustomSize,
+    customSize,
     setStartPlay,
     startTimer,
+    setCustomWin
   } = useOnlinePlayStore();
-
   const { user } = useAuthStore();
+  const { createRoom, joinRoom } = useOnlinePlayStore();
   const roomId = useOnlinePlayStore((state) => state.roomId);
   const status = useOnlinePlayStore((state) => state.status);
   const error = useOnlinePlayStore((state) => state.error);
+  const selectedIcon = useOnlinePlayStore((state) => state.selectedIcon);
+  const selectedColor = useOnlinePlayStore((state) => state.selectedColor);
+  const setPlayer = useOnlinePlayStore((state) => state.setPlayer);
   const opponentUser = useOnlinePlayStore((state) => state.opponentUser)
-  const { createRoom, joinRoom , cleanup} = useOnlinePlayStore();
-
+  const customWin = useOnlinePlayStore((state) => state.customWin);
   React.useEffect(() => {
     if (status === "Room not found" && !isRoomCreated) {
       setStep(0);
@@ -48,9 +50,13 @@ const LudoLobby = () => {
       toast(status);
     }
   }, [status, isRoomCreated, setStep, setRoomId]);
+  useEffect(() => {
+    setPlayer({ user: user,symbol:{ id: selectedIcon.id,color:selectedColor} });
+  }, [selectedColor ,selectedIcon , setPlayer , user])
+  
 
   const handleCreate = () => {
-    createRoom("online", user);
+    createRoom("online", "");
     setStep(2);
     spendCoins(entryAmount)
   };
@@ -64,9 +70,17 @@ const LudoLobby = () => {
     setStep(2);
     setIsLoading(true);
     spendCoins(entryAmount);
-    if (!isRoomCreated) joinRoom(roomId, user);
+    if (!isRoomCreated) joinRoom(roomId);
   };
 
+  const { currentIndex, setCurrentIndex, } = useOnlinePlayStore();
+  const handleLeft = () => {
+    setCurrentIndex(prev => Math.max(0, prev - 1));
+  };
+
+  const handleRight = () => {
+    setCurrentIndex(prev => Math.min(board.length - 4, prev + 1));
+  };
   const handleStartGame = useCallback(() => {
     setStartPlay(true)
     startTimer();
@@ -83,20 +97,15 @@ const LudoLobby = () => {
       setIsLoading(true);
     }
   }, [opponentUser, user, handleStartGame]);
+  const enabled = customSize === 4 ? [3, 4] : [3, 4, 5]
   return (
     <>
-    {error && <Loader/>}
-    <div className={`${step === 2 ? 'bg-red-600' : 'bg-[#000000de]'} z-101 min-h-screen text-white font-sans 
-    absolute top-1 flex flex-col items-center justify-start px-4 w-full overflow-hidden`}>
       {/* Background elements if needed */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         {/* Add subtle patterns if desired */}
       </div>
       {step !== 2 && (
         <>
-          {/* Top Bar: Coins, Diamonds, Game History */}
-           <TotalCash totalCoins={totalCoins} diamonds={diamonds} />
-
           {/*  Toggle: Create | Join */}
           <div className="flex space-x-4 mb-3">
             <button
@@ -122,115 +131,106 @@ const LudoLobby = () => {
           </div>
         </>
       )}
-
-      <div className="absolute top-0 left-0 bg-blue-500">
-        <button onClick={() => {
-          if (step === 2) {
-            setStep(1);
-          } else if (step === 1) {
-            setStep(0);
-          } else if (step === 0){
-            cleanup();
-          }
-        }}>
-          <TbArrowBackUp className='h-8 w-8 text-yellow-500' />
-        </button>
-      </div>
-
       {(isRoomCreated && step === 0) && (
         <>
           {/* Select Board */}
-          <div className="w-full max-w-md mb-3 bg-blue-800 py-4 border-2 border-yellow-300">
+          <div className="w-full max-w-md mb-3 bg-blue-900 py-4 border-4 border-yellow-300 shadow-[0_0_15px_5px_rgba(255,215,0,0.7)]">
             <h2 className="text-xl font-bold mb-4 text-center text-yellow-500">Select Board</h2>
-            <div className="flex justify-around">
-              {[3, 4, 5].map((players) => (
-                <button
-                  key={players}
-                  onClick={() => {
-                    setNumPlayers(players);
-                    setCustomSize(players);
-                  }}
-                  className={`relative p-2 rounded-lg transition ${numPlayers === players
-                    ? 'bg-blue-700 shadow-lg scale-105 border-yellow-300 border-2'
-                    : 'bg-gray-700 hover:bg-gray-600 border-white/50 border-2'
-                    }`}
-                >
-                  <img
-                    src="/images/tic-tac-toe.png"
-                    alt={`${players} players`}
-                    className="w-16 h-16 object-cover rounded"
-                  />
-                  <div className="absolute bottom-2 right-2 bg-white text-black text-[8px] rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                    {players}X{players}
-                  </div>
-                  {numPlayers === players && <FaCheckCircle className="absolute -top-1 -right-2 w-8 h-8 rounded-full text-white" />}
-                </button>
-              ))}
+            <div className="flex items-center justify-center">
+              <button
+                onClick={handleLeft}
+                className={`flex-shrink-0 mr-4 p-2 ${currentIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                disabled={currentIndex === 0}>
+                <FaCaretLeft className='text-yellow-300 h-8' />
+              </button>
+              <div className="overflow-hidden w-80 flex-shrink-0">
+                <div
+                  className="flex gap-4 transition-transform duration-500 ease-in-out"
+                  style={{ transform: `translateX(${-currentIndex * 64}px)` }}>
+                  {board.map((board) => (
+                    <button
+                      key={board.size}
+                      onClick={() => {
+                        setCustomSize(board.size);
+                      }}
+                      className={`relative rounded-xl flex items-center justify-center border-4 transition w-20 flex-shrink-0 ${customSize === board.size
+                        ? 'bg-blue-700 shadow-lg scale-105 border-yellow-300 border-2'
+                        : 'bg-gray-700 hover:bg-gray-600 border-white/50 border-2'
+                        } ${board.isLocked ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}
+                          `} disabled={board.isLocked}
+                    >
+                      <img
+                        src="/images/tic-tac-toe.png"
+                        alt={`${customSize} players`}
+                        className="w-16 h-16 object-cover rounded"
+                      />
+                      <div className="absolute bottom-2 right-2 bg-white text-black text-[8px] rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                        {board.size}X{board.size}
+                      </div>
+                      {customSize === board.size && <FaCheckCircle className="absolute -top-1 -right-2 w-8 h-8 rounded-full bg-yellow-300 text-white" />}
+                      {board.isLocked && <IoIosLock className="absolute -top-1 right-1/3 text-lg brightness-100 opacity-100 text-yellow-400" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={handleRight}
+                className={`flex-shrink-0 ml-4 p-2 ${currentIndex === board.length - 4 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                disabled={currentIndex === board.length - 4}>
+                <FaCaretRight className='text-yellow-300 h-8' />
+              </button>
             </div>
+            {(!board.find((b) => b.size === 4).isLocked && customSize >= 4) && (
+              <><SelectPlayers selectedPlayers={customWin} setSelectedPlayers={setCustomWin} enabled={enabled} disabled={[]} button={'Win'} /></>
+            )}
           </div>
 
           {/* Create Lobby / Join (but since create, show Create Lobby) */}
-          <div className="bg-blue-800 outline-2 outline-yellow-300 p-4 w-full max-w-md mb-1 text-center">
-            <h3 className="font-bold mb-2 text-yellow-400">Select Lobby</h3>
-            {/* Toggles: Voice Chat, Chat */}
-            <div className="flex justify-center mb-2">
-              <button
-                onClick={() => setVoiceChat(!voiceChat)}
-                className="relative flex items-center pl-8 pr-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-md"
-              >
-                {/* Left golden ring */}
-                <span className="absolute -left-3 flex items-center justify-center w-10 h-10 rounded-full border-4 border-yellow-400 bg-blue-900">
-                  {voiceChat && (
-                    <FaCheck className='text-white w-8 h-8' />
-                  )}
-                </span>
+          <div className="w-full max-w-md flex flex-col text-center mb-2">
+            <div className="bg-blue-800 border-4 border-yellow-300 w-full px-4 max-w-md 
+              text-center shadow-[0_0_15px_5px_rgba(255,215,0,0.7)]">
+              <h3 className="font-bold mb-2 text-yellow-400 ">Select Lobby</h3>
+              {/* Toggles: Voice Chat, Chat */}
+              <div className="flex justify-center mb-2">
+                <button
+                  onClick={() => setVoiceChat(!voiceChat)}
+                  className="relative flex items-center pl-8 pr-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-md"
+                >
+                  {/* Left golden ring */}
+                  <span className="absolute -left-3 flex items-center justify-center w-10 h-10 rounded-full border-4 border-yellow-400 bg-blue-900">
+                    {voiceChat && (
+                      <FaCheck className='text-white w-8 h-8' />
+                    )}
+                  </span>
 
-                {/* Text */}
-                <span className="ml-4">Voice Chat</span>
+                  {/* Text */}
+                  <span className="ml-4">Voice Chat</span>
 
-                {/* Right green bubble with mic */}
-                 <VoiceIcon />
-              </button>
-            </div>
-            <div className="line w-full bg-amber-100 h-1 mb-2"></div>
-            {/* Entry Fee */}
-            <div className="flex justify-center space-x-4 mb-4 items-center">
-              <button onClick={() => setEntryAmount(Math.max(100, entryAmount - 100))}
-                className={`flex items-center space-x-1 px-4 h-10 rounded-lg font-bold border-2 ${entryAmount <= 100 ? 'border-amber-400/35 bg-blue-900/35' : 'border-amber-400 bg-blue-400'}`}>
-                <FaMinus />
-              </button>
-              <div className="flex p-1 flex-col bg-yellow-300 rounded-xl">
-                <div className="flex flex-col items-center justify-center gap-2 bg-gray-400 rounded-t-xl p-2">
-                  <FaCoins className='text-yellow-300' />
-                  <span className='px-4 bg-gray-600 text-white rounded-xl'>{entryAmount}</span>
-                </div>
-                <span className='font-extrabold'>Entry</span>
+                  {/* Right green bubble with mic */}
+                  <VoiceIcon />
+                </button>
               </div>
-              <button onClick={() => setEntryAmount(entryAmount + 100)}
-                className={`flex items-center space-x-1 px-4 h-10 rounded-lg font-bold border-2 border-amber-400 bg-blue-400`}>
-                <FaPlus />
+              <div className="line w-full bg-amber-100 h-1 mb-2"></div>
+              {/* Entry Fee */}
+              <EntryFee setEntryAmount={setEntryAmount} entryAmount={entryAmount} />
+              {/* Next Button */}
+              <button onClick={() => setStep(1)}
+                className={`bg-blue-600 text-white font-bold px-8 py-1 rounded-full shadow-lg
+               hover:scale-105 transition mb-4 ${shadow}`}>
+                Next
               </button>
             </div>
-            {/* Next Button */}
-            <button onClick={() => setStep(1)}
-              className={`bg-blue-600 text-white font-bold px-8 py-1 rounded-full shadow-lg
-               hover:scale-105 transition mb-4 ${shadow}`}>
-              Next
-            </button>
           </div>
         </>
       )}
       {((!isRoomCreated && step !== 2) || step === 1) && (
         <>
-          {/* Select Token / Color */}
+          {/* Select Icon */}
           <SelectIcon />
         </>
       )}
       {(step === 1) && (
         <>
-          {/* Select Game */}
-          <SelectGame />
-
           {/* Create Room Button */}
           <div className="bg-blue-800 border-2 border-yellow-300 rounded-xl p-4 w-full max-w-md mb-4 text-center">
             <button onClick={() => handleCreate()}
@@ -249,14 +249,14 @@ const LudoLobby = () => {
           {/* Join  */}
           <div className="bg-blue-800 border-2 border-amber-300 rounded-xl p-4 w-full max-w-md mb-1 text-center">
             <h3 className="font-bold mb-4">Enter Private Room Code</h3>
-            <p className="font-bold text-red-600 mb-4">{(error)&& error}</p>
+            <p className="font-bold text-red-600 mb-4">{(error) && error}</p>
             {/* Enter Private Code */}
-            <input type="text" placeholder="Enter private code here..." value={roomId} required onChange={(e) => setRoomId(e.target.value)} className="w-full px-4 py-3 rounded-lg bg-white text-black mb-4 text-center"/>
+            <input type="text" placeholder="Enter private code here..." value={roomId} required onChange={(e) => setRoomId(e.target.value)} className="w-full px-4 py-3 rounded-lg bg-white text-black mb-4 text-center" />
             <button
               onClick={handleJoin} disabled={isLoading}
               className="bg-yellow-500 cursor-pointer text-black font-bold px-8 py-3 rounded-full shadow-lg hover:scale-105 transition w-full"
             >
-             {isLoading ? 'Loading' : 'Join Room'}
+              {isLoading ? 'Loading' : 'Join Room'}
             </button>
             {/* Daily Free */}
             <div className="flex items-center justify-center space-x-2 text-sm mb-1">
@@ -329,10 +329,7 @@ const LudoLobby = () => {
                       className="w-24 h-24 rounded-full border-4 border-red-500 object-cover"
                     />
                   )}
-                  {!opponentUser?.user?.profilePicture && isRoomCreated && (
-                    <p></p>
-                  )}
-                  {!opponentUser?.user.profilePicture && (<img
+                  {!opponentUser?.user?.profilePicture && (<img
                     src={'./images/player.png'}
                     alt="Profile"
                     className={` rounded-full object-cover w-12 h-12 text-white`}
@@ -347,21 +344,20 @@ const LudoLobby = () => {
 
           {/* Bottom Ready Button */}
           <button disabled={!isLoading} onClick={() => handleStartGame()} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-full transition duration-300 shadow-lg">
-           {isLoading ?' Ready to Play' : 'Loading'}
+            {isLoading ? ' Ready to Play' : 'Loading'}
           </button>
         </div>
       )}
       {step !== 2 && (
         <>
           {/* Bottom Icons: How to Play, Social */}
-          <div className="flex justify-center space-x-6 mt-auto pb-4">
+          <div className="flex justify-center space-x-6 pb-4 max-w-md">
             <FiHelpCircle className="text-2xl hover:scale-110 transition cursor-pointer" title="How to Play" />
             <FiShare2 className="text-2xl hover:scale-110 transition cursor-pointer" title="Share" />
             <FiGift className="text-2xl hover:scale-110 transition cursor-pointer" title="Daily" />
           </div>
         </>
       )}
-    </div>
     </>
   );
 };

@@ -2,8 +2,6 @@ import { create } from "zustand";
 import { getSocket } from "../services/socketService.js";
 import { toast } from 'react-toastify';
 
-// import { setPlayerState } from "./gameSlice.js";
-
 // Import audio files
 import bgMusic from "/music/background-music.mp3";
 import winMusic from "/music/win-music.mp3";
@@ -14,6 +12,7 @@ import Click from "/music/click.mp3";
 import wrongClickSound from "/music/wrong-click-sound.mp3";
 import restartSound from "/music/restart-sound.mp3";
 import strikeSound from "/music/strike.mp3";
+import { OIcon, XIcon } from "../Assets/react-icons.jsx";
 import useAuthStore from "./useAuthStore.js";
 
 const useOnlinePlayStore = create((set, get) => {
@@ -82,7 +81,6 @@ const useOnlinePlayStore = create((set, get) => {
             totalGameWon: null,
             board: null,
             line: null,
-            playerSymbol: null,
         },
         setRef: (name, ref) =>
             set((state) => ({
@@ -93,12 +91,11 @@ const useOnlinePlayStore = create((set, get) => {
         roomId: '',
         socket: getSocket(),
         socketId: null,
-        opponentUser: { user: { username: "AI", email: "ankit2005bhagat@gmail.com", profilePicture: "" }, symbol: 'O' },
+        opponentUser: {},
         playersInfo: [],
         isPlaying: false,
         musicOn: false,
         currentPlayer: null,
-        playerSymbol: null,
         status: "",
         winLineStyle: {},
         showWinLine: false,
@@ -109,19 +106,18 @@ const useOnlinePlayStore = create((set, get) => {
         customSize: 3,
         player: {},
         playerState: '',
-        mode: '',
+        mode: 'Classic',
         startPlay: false,
         boardState: Array(9).fill(null),
 
-        round: 1,
+        round: 0,
         score: 0,
         gameOver: false,
         timer: 120,
         intervalId: null,
-        numPlayers: 3,
-        selectedIcon: { id: "X", icon: "AutoColorX" },
+        selectedIcon: { id: "X", icon: XIcon },
+        opponentIcon: { id: "0", icon: OIcon },
         selectedColor: { id: "red", bg: "bg-red-500", border: "border-red-400" },
-        privateCode: "",
         voiceChat: false,
         entryAmount: 100,
         currentIndex: 0,
@@ -135,19 +131,22 @@ const useOnlinePlayStore = create((set, get) => {
         isPlayingWith: '',
         onlineUsers: [],
         nextOpponent: null,
+        isCreator: false,
+        selectedPlayers: 2,
         // setters
+        setSelectedPlayers: (num) => set({ selectedPlayers: num }),
         setError: (error) => set({ error: error }),
+        setIsCreator: (value) => set({ isCreator: value }),
         setNextOpponent: (opponent) => set({ nextOpponent: opponent }),
         setIsPlayingWith: (isPlayingWith) => set({ isPlayingWith: isPlayingWith }),
         setMusicOn: (value) => set((state) => ({ musicOn: typeof value === 'function' ? value(state.musicOn) : value })),
         setShowSetting: (value) => set({ showSetting: value }),
-        setNumPlayers: (num) => set({ numPlayers: num }),
         setSelectedIcon: (icon) => set({ selectedIcon: icon }),
+        setOpponentIcon: (icon) => set({ opponentIcon: icon }),
         setSelectedColor: (color) => set({ selectedColor: color }),
-        setPrivateCode: (code) => set({ privateCode: code }),
         setVoiceChat: (enabled) => set({ voiceChat: enabled }),
         setEntryAmount: (amount) => set({ entryAmount: amount }),
-        setCurrentIndex: (index) => set({ currentIndex: index }),
+        setCurrentIndex: (index) => set((state) => ({ currentIndex: typeof index === 'function' ? index(state.currentIndex) : index })),
         setStep: (step) => set({ step }),
         setSelectedGame: (game) => set({ selectedGame: game }),
         addCoins: (amount) => set((state) => ({ totalCoins: state.totalCoins + amount })),
@@ -158,7 +157,6 @@ const useOnlinePlayStore = create((set, get) => {
         setTimer: (value) => set({ timer: value }),
         setIsPlaying: (isPlaying) => set({ isPlaying: isPlaying }),
         setIsGameOver: (value) => set({ gameOver: value }),
-        setPlayerSymbol: (symbol) => set({ playerSymbol: symbol }),
         setRoomId: (roomId) => set({ roomId: roomId }),
         setCurrentPlayer: (currentPlayer) => set({ currentPlayer: currentPlayer }),
         setStatus: (status) => set({ status }),
@@ -214,7 +212,7 @@ const useOnlinePlayStore = create((set, get) => {
         },
         // Socket Event Listeners
         initsocketListeners: () => {
-            const { stop, socket, loop, setPlayerSymbol, setBoardState, setStatus, handleRoundOver, handleGameOver, resetWinLine, setRoomId, setCurrentPlayer } = get();
+            const { stop, socket, loop, setBoardState, setStatus, handleRoundOver, handleGameOver, resetWinLine, setRoomId, setCurrentPlayer } = get();
             if (!socket) {
                 get().setError("No Socket Received");
                 return
@@ -237,7 +235,9 @@ const useOnlinePlayStore = create((set, get) => {
             // Socket event listeners
 
             socket.on("onlineUsers", (users) => {
-                get().setOnlineUsers(users);
+                const user = useAuthStore.getState().user;
+                const filteredUsers = users.filter(u => u.userId !== user.userId);
+                get().setOnlineUsers(filteredUsers);
             })
 
             socket.on("updateBoard", (board, currentPlayer) => {
@@ -274,9 +274,8 @@ const useOnlinePlayStore = create((set, get) => {
 
             socket.on("roomIdReceived", (receivedRoomId) => {
                 setRoomId(receivedRoomId);
-                const currentUser = useAuthStore.getState().user;
-                socket.emit("joinGame", receivedRoomId, currentUser);
-                if(receivedRoomId) get().setStartPlay(true);
+                const { player } = get();
+                socket.emit("joinGame", receivedRoomId.trim(), player);
             });
 
             socket.on("gameOver", (msg, winner, winningCells) => {
@@ -286,9 +285,12 @@ const useOnlinePlayStore = create((set, get) => {
                 handleGameOver();
             });
             socket.on("startGame", (msg) => {
+                // const user = useAuthStore.getState().user;
                 setStatus(msg);
-                if (get().round <= 1) get().resetTimer();
-                if (get().round <= 1) get().startTimer();
+                if (get().round <= 1) {
+                    get().startTimer();
+                    get().setStartPlay(true);
+                }
                 resetWinLine();
             });
 
@@ -303,14 +305,15 @@ const useOnlinePlayStore = create((set, get) => {
                 const usersOwn = playersInfo.find(p => p.id === myId);
                 const opponent = playersInfo.find(p => p.id !== myId);
                 if (opponent) {
-                    get().setOpponentUser(opponent);
+                    get().setOpponentUser(opponent.user);
                     get().setMode(opponent.mode)
                     get().setCustomSize(opponent.customSize);
                 }
                 if (usersOwn) {
-                    setPlayerSymbol(usersOwn.symbol)
-                    setStatus(`You are Player ${usersOwn.symbol}`)
+                    setStatus(`You are Player ${usersOwn.id}`);
                 }
+                if (usersOwn.isCreator) get().setIsCreator(usersOwn.isCreator);
+                console.log(opponent.user);
             });
         },
         resetWinLine: () => {
@@ -403,7 +406,7 @@ const useOnlinePlayStore = create((set, get) => {
             let msg = "";
 
             if (score > opponentScore) {
-                msg = "You won! ";
+                msg = "You won! "; // 🏆
                 get().play("winMusic");
                 toast.success(msg);
             } else if (score < opponentScore) {
@@ -411,7 +414,7 @@ const useOnlinePlayStore = create((set, get) => {
                 get().play("loseMusic");
                 toast.error(msg);
             } else {
-                msg = "It's a draw! ";
+                msg = "It's a draw! "; //  🤝
                 get().play("drawMusic");
                 toast.info(msg);
             }
@@ -431,23 +434,22 @@ const useOnlinePlayStore = create((set, get) => {
         },
         // 🔹 round over handler
         handleRoundOver: (msg, winner, winningCells) => {
-            const { playerSymbol, score, round, addRound, setStatus, setShowWinLine, setBoardLocked, drawWinLine, refs, } = get();
+            const { player, score, round, addRound, setStatus, setShowWinLine, setBoardLocked, drawWinLine, refs, } = get();
 
             // stop background
             get().loop("bgMusic", false);
             get().stop("bgMusic");
-            addRound(1)
-
+            addRound(1);
             // play result sounds
             if (winner === null) {
                 get().play("drawMusic");
                 toast.info("It is a Draw");
-            } else if (playerSymbol === winner) {
+            } else if (player?.symbol.id === winner) {
                 get().play("winMusic");
                 get().addCoins(900);
                 get().addScore(1);
                 toast.success("You have won");
-            } else if (playerSymbol !== winner && winner) {
+            } else if (player?.symbol.id !== winner && winner) {
                 get().play("loseMusic");
                 toast.error("You have lost");
             }
@@ -477,63 +479,90 @@ const useOnlinePlayStore = create((set, get) => {
             setShowWinLine(false);
         },
         aiMove: (index) => {
-            const { setStatus, currentPlayer, customSize, customWin, playerSymbol, setWinCells, setPlayerSymbol, boardState, setBoardState, checkWinner, handleRoundOver, setCurrentPlayer, checkDraw } = get();
+            const {
+                setStatus,
+                player,
+                opponentUser,
+                // currentPlayer,
+                customSize,
+                customWin,
+                setWinCells,
+                setBoardState,
+                boardState,
+                checkWinner,
+                handleRoundOver,
+                setCurrentPlayer,
+                checkDraw,
+                play,
+            } = get();
 
-            // assume human is always "X" unless you store playerSymbol differently
-            const humanSymbol = playerSymbol || "X";
-            const aiSymbol = humanSymbol === "X" ? "O" : "X";
-            setPlayerSymbol(humanSymbol)
+            // Both player and AI symbols (JSX)
+            const humanSymbol = player?.symbol?.id;
+            const aiSymbol = opponentUser?.symbol?.id;
 
-            // place human symbol
             const newBoard = [...boardState];
+            // 🧱 Prevent overwriting filled cells
             if (newBoard[index] !== null) {
                 toast.error("This cell is already filled!");
-                get().play("wrongClickSound");
+                play("wrongClickSound");
                 return;
             }
+
+            // 🎯 Player move
             newBoard[index] = humanSymbol;
             setBoardState(newBoard);
-            get().play("cellclickSound");
+            play("cellclickSound");
 
-            // check win/draw
+            // 🏁 Check if human won
             const result = checkWinner(newBoard, customSize, customSize, customWin);
             if (result?.winner) {
                 setWinCells(result.cells);
-                handleRoundOver(`Player ${result.winner} wins!`, result.winner, result.cells);
+                handleRoundOver(`You win!`, result.winner, result.cells);
                 return;
             }
+
             if (checkDraw(newBoard)) {
                 handleRoundOver(`It's a draw!`, null, []);
                 return;
             }
-            (playerSymbol === currentPlayer && currentPlayer) && setStatus(`It's Player ${currentPlayer}'s turn!`);
 
-            // AI move (simple random for now)
+            // 🧠 Switch to AI turn
+            setCurrentPlayer(opponentUser?.symbol?.id);
+            setStatus("AI is thinking...");
+
+            // ⏱ Simulate AI delay (0.5s)
             setTimeout(() => {
-                const empty = newBoard.reduce((acc, v, i) => { if (!v) acc.push(i); return acc; }, []);
-                if (empty.length === 0) return;
-                const choice = empty[Math.floor(Math.random() * empty.length)];
-                const afterAI = [...newBoard];
-                afterAI[choice] = aiSymbol;
-                setBoardState(afterAI);
-                get().play("cellclickSound");
+                const availableMoves = newBoard
+                    .map((v, i) => (v === null ? i : null))
+                    .filter((v) => v !== null);
 
-                const winner2 = checkWinner(afterAI, customSize, customSize, customWin);
-                if (winner2?.winner) {
-                    setWinCells(winner2.cells);
-                    handleRoundOver(`Player ${winner2.winner} wins!`, winner2.winner, winner2.cells);
+                if (availableMoves.length === 0) return;
+
+                const aiChoice =
+                    availableMoves[Math.floor(Math.random() * availableMoves.length)];
+
+                const afterAI = [...newBoard];
+                afterAI[aiChoice] = aiSymbol;
+                setBoardState(afterAI);
+                play("cellclickSound");
+
+                // ✅ Check AI win/draw
+                const aiResult = checkWinner(afterAI, customSize, customSize, customWin);
+                if (aiResult?.winner) {
+                    setWinCells(aiResult.cells);
+                    handleRoundOver(`AI wins!`, aiResult.winner, aiResult.cells);
                     return;
                 }
+
                 if (checkDraw(afterAI)) {
                     handleRoundOver(`It's a draw!`, null, []);
                     return;
                 }
 
-                // AI done, human turn again (if you maintain currentPlayer)
-                setCurrentPlayer(humanSymbol);
+                // 🔁 Switch back to human turn
+                setCurrentPlayer(player?.symbol?.id);
+                setStatus("Your turn!");
             }, 500);
-
-            return;
         },
         generateWinningPatterns: (rows, cols, winLength) => {
             const patterns = [];
@@ -580,26 +609,26 @@ const useOnlinePlayStore = create((set, get) => {
         },
         checkDraw: (board) => board.every(cell => cell !== null),
         boardElClick: (e) => {
-            const { boardLocked, refs, socket, setShowWinLine, roomId, playerSymbol } = get();
+            const { boardLocked, refs, socket, setShowWinLine, roomId, player } = get();
             const { generateWinningPatterns, customSize, customWin } = get();
             const winConditions = generateWinningPatterns(customSize, customSize, customWin);
             if (boardLocked) return; // 🚫 prevent moves if locked
 
             const index = [...refs.board.children].indexOf(e.target);
             if (index !== -1) {
-                socket.emit("makeMove", { roomId, index, player: playerSymbol, winConditions });
+                socket.emit("makeMove", { roomId, index, player: player, winConditions });
             }
             setShowWinLine(false);
         },
-        createRoom: (selectedMode, user, nextOpponent) => {
-            const { socket, customSize, setPlayerState, mode, isPlayingWith, roomId } = get();
+        createRoom: (selectedMode, nextOpponent) => {
+            const { socket, customSize, setPlayerState, mode, player, isPlayingWith, roomId } = get();
             if (selectedMode === "online") {
                 setPlayerState("online");
-                if (isPlayingWith === 'friends') socket.emit("createRoom", customSize, mode, user);
+                if (isPlayingWith === 'friends') socket.emit("createRoom", customSize, mode, player);
                 if (isPlayingWith === 'randomUser') {
                     if (!roomId) {
                         // first player creates
-                        socket.emit("createRoom", customSize, mode, user);
+                        socket.emit("createRoom", customSize, mode, player);
                         get().setNextOpponent(nextOpponent);
                     }
                 }
@@ -607,8 +636,8 @@ const useOnlinePlayStore = create((set, get) => {
                 get().setError("User is not Online")
             }
         },
-        joinRoom: (roomId, user) => {
-            const { setShowWinLine, setRoomId, socket, setPlayerState } = get();
+        joinRoom: (roomId) => {
+            const { setShowWinLine, setRoomId, socket, setPlayerState, player } = get();
             if (!socket) {
                 get().setError("Socket not connected yet");
                 return;
@@ -616,18 +645,17 @@ const useOnlinePlayStore = create((set, get) => {
             setPlayerState("online");
             const trimmedId = roomId.trim();
             setRoomId(trimmedId);
-            socket.emit("joinGame", trimmedId, user);
+            socket.emit("joinGame", trimmedId, player);
             setShowWinLine(false);
         },
         cleanup: () => {
             set({
                 roomId: '',
                 socketId: null,
-                opponentUser: { user: { username: '', profilePicture: '' }, symbol: 'O' },
+                opponentUser: {},
                 playersInfo: [],
                 isPlaying: false,
                 currentPlayer: null,
-                playerSymbol: null,
                 status: "",
                 winLineStyle: {},
                 showWinLine: false,
@@ -636,7 +664,7 @@ const useOnlinePlayStore = create((set, get) => {
 
                 customWin: 3,
                 customSize: 3,
-                player: { username: '', },
+                player: {},
                 playerState: '',
                 mode: '',
                 startPlay: false,
@@ -647,10 +675,9 @@ const useOnlinePlayStore = create((set, get) => {
                 gameOver: false,
                 timer: 60,
                 intervalId: null,
-                numPlayers: 3,
-                selectedIcon: { id: "X", icon: "AutoColorX" },
+                selectedIcon: { id: "X", icon: XIcon },
+                opponentIcon: { id: "0", icon: OIcon },
                 selectedColor: { id: "red", bg: "bg-red-500", border: "border-red-400" },
-                privateCode: "",
                 voiceChat: false,
                 entryAmount: 100,
                 currentIndex: 0,
